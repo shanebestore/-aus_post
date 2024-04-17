@@ -31,6 +31,10 @@ cz_post_feb_eparcel_regular_ex_mel = read.csv("cz_post_feb_eparcel_regular_ex_me
 cz_post_feb_eparcel_express_ex_mel = read.csv("cz_post_feb_eparcel_express_ex_mel.csv", head=TRUE, row.names = 1,  sep=",")
 cz_post_feb_eparcel_regular_ex_syd = read.csv("cz_post_feb_eparcel_regular_ex_syd.csv", head=TRUE, row.names = 1,  sep=",")
 cz_post_feb_eparcel_express_ex_syd = read.csv("cz_post_feb_eparcel_express_ex_syd.csv", head=TRUE, row.names = 1,  sep=",")
+cz_post_feb_eparcel_express_ex_syd = read.csv("cz_post_feb_eparcel_express_ex_syd.csv", head=TRUE, row.names = 1,  sep=",")
+cz_post_feb_eparcel_wine_ex_mel = read.csv("cz_post_feb_eparcel_wine_ex_mel.csv", head=TRUE, row.names = 1,  sep=",")
+cz_post_feb_eparcel_wine_ex_syd = read.csv("cz_post_feb_eparcel_wine_ex_syd.csv", head=TRUE, row.names = 1,  sep=",")
+
 
 
 
@@ -59,7 +63,9 @@ bill_cut1$uplift_service <- ifelse(bill_cut1$REGION == "VIC" & bill_cut1$DESCRIP
                                                                        ifelse(bill_cut1$DESCRIPTION == "Express Post eparcel returns", "exp_eparcel_returns",
                                                                               ifelse(bill_cut1$DESCRIPTION == "eParcel Post Return", "reg_eparcel_returns",
                                                                                      ifelse(bill_cut1$DESCRIPTION == "eParcel Call For Return", "reg_ep_call_for_return",
-                                                         NA)))))))))
+                                                                                            ifelse(bill_cut1$REGION == "VIC" & bill_cut1$DESCRIPTION == "EPARCEL WINE STD", "eparcel_wine.VIC",
+                                                                                                   ifelse(bill_cut1$REGION == "NSW" & bill_cut1$DESCRIPTION == "EPARCEL WINE STD", "eparcel_wine.NSW",
+                                                         NA))))))))))) 
 
 ##### customer code ####
 # Function to extract letters before the first "-"

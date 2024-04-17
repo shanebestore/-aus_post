@@ -5,7 +5,7 @@
 bill_cut_a <-  bill_cut1
 
 #### temp work zone here
-#bill_cut_a  <- subset(bill_cut_a , NAME_1 %in% c('AGN - Ambition Group NZ - MW1'))
+#bill_cut_a  <- subset(bill_cut_a , ARTICLE.ID %in% c('00093480830461839192'))
 
 #### Cubic factor ####
 # leaving this here as it might only relate to basic charges
@@ -37,14 +37,14 @@ bill_cut_a$over_max_limits_fee <- ifelse(bill_cut_a$ACTUAL.WEIGHT > 22 | bill_cu
 # leaving this in as we are classfifying the new max weight
 cz_max_weight <- bill_cut_a$max_weight
 
-# define categorisation function to calssify the weight
-categorize_weight <- function(weight_kg) {
+# Define the original categorisation function to classify the weight
+categorize_weight_for_express <- function(weight_kg) {
   categories <- sapply(weight_kg, function(w) {
     if (is.na(w)) {
       return("NA")
     } else if (w == 0) {
       return("na")
-    } else if(w >= 0.00001 & w <= 0.5) {
+    } else if (w >= 0.00001 & w <= 0.5) {
       return("Up_to_500g")
     } else if (w <= 1) {
       return("X501g_to_1kg")
@@ -65,18 +65,135 @@ categorize_weight <- function(weight_kg) {
     } else if (w <= 22) {
       return("X15.01kg_to_22kg")
     } else {
-      return("Basic")  # Changed this line to return "Basic" for weights > 22kg
+      return("Basic")
     }
   })
   return(categories)
 }
-weight_category_max <- categorize_weight(cz_max_weight)
-output_a <- cbind(bill_cut_a,  weight_category_max)
+
+# Define the new categorisation function for "EPARCEL WINE STD" for VIC and NSW
+categorize_weight_for_wine <- function(weight_kg) {
+  categories <- sapply(weight_kg, function(w) {
+    if (is.na(w)) {
+      return("NA")
+    } else if (w == 0) {
+      return("na")
+    } else if (w >= 0.00001 & w <= 2) {
+      return("Up_to_2kg")
+    } else if (w <= 3) {
+      return("X2.01kg_to_3kg")
+    } else if (w <= 5) {
+      return("X3.01kg_to_5kg")
+    } else if (w <= 9) {
+      return("X5.01kg_to_9kg")
+    } else if (w <= 16) {
+      return("X9.01kg_to_16kg")
+    } else if (w <= 22) {
+      return("X16.01kg_to_22kg")
+    } else {
+      return("Above_5kg_for_Wine")
+    }
+  })
+  return(categories)
+}
+
+# Determine which categorization function to use based on uplift_service
+if (any(bill_cut_a$uplift_service %in% c("eparcel_wine.VIC", "eparcel_wine.NSW"))) {
+  weight_category_max <- categorize_weight_for_wine(cz_max_weight)
+} else {
+  weight_category_max <- categorize_weight_for_express(cz_max_weight)
+}
+
+output_a <- cbind(bill_cut_a, weight_category_max)
 
 
+######## eparcel wine
+
+#### base charge for eparcel_wine.VIC ####
+
+# cut the dataset down to correct uplift service
+output_i1 <- subset(output_a, uplift_service %in% c("eparcel_wine.VIC"))
+
+#Determine the indexes to use to query the new base charge zone sheet 
+
+# find the row and column number to reference against z_c
+col_name_max<- as.character(output_i1$weight_category_max)
+col_index_max <- unlist(lapply(output_i1$weight_category_max, function(col_name_max) {
+  which(colnames(cz_post_feb_eparcel_wine_ex_mel) == col_name_max)
+}))
+
+row_name_max<- as.character(output_i1$CHARGE.ZONE)
+row_index_max <- unlist(lapply(row_name_max, function(row_name_max) {
+  index <- which(rownames(cz_post_feb_eparcel_wine_ex_mel) == row_name_max)
+  if (length(index) == 0) {
+    NA
+  } else {
+    index
+  }
+}))
 
 
-write.csv(bill_cut_a, file = "bill_cut_a.csv")
+output_i_2 <-cbind(output_i1, (cbind(row_index_max, col_index_max)))
+
+
+# query new base charge rate 
+# Function to extract values from charge zone dataset based on indices
+
+extract_charge_value_max_incgst <- function(row_index_max, col_index_max) {
+  charge_value <- cz_post_feb_eparcel_wine_ex_mel[row_index_max, col_index_max]
+  return(charge_value)
+}
+
+output_i_2$charge_value_max_incgst <- mapply(extract_charge_value_max_incgst, output_i_2$row_index_max, output_i_2$col_index_max)
+
+output_i_2$base_charge_incgst <- output_i_2$charge_value_max_incgst
+
+write.csv(output_i_2, file = "output_i_2.csv")
+
+
+#### base charge for eparcel_wine.NSW ####
+
+# cut the dataset down to correct uplift service
+output_j1 <- subset(output_a, uplift_service %in% c("eparcel_wine.NSW"))
+
+#Determine the indexes to use to query the new base charge zone sheet 
+
+# find the row and column number to reference against z_c
+col_name_max<- as.character(output_j1$weight_category_max)
+col_index_max <- unlist(lapply(output_j1$weight_category_max, function(col_name_max) {
+  which(colnames(cz_post_feb_eparcel_wine_ex_syd) == col_name_max)
+}))
+
+row_name_max<- as.character(output_j1$CHARGE.ZONE)
+row_index_max <- unlist(lapply(row_name_max, function(row_name_max) {
+  index <- which(rownames(cz_post_feb_eparcel_wine_ex_syd) == row_name_max)
+  if (length(index) == 0) {
+    NA
+  } else {
+    index
+  }
+}))
+
+
+output_j_2 <-cbind(output_j1, (cbind(row_index_max, col_index_max)))
+
+
+# query new base charge rate 
+# Function to extract values from charge zone dataset based on indices
+
+extract_charge_value_max_incgst <- function(row_index_max, col_index_max) {
+  charge_value <- cz_post_feb_eparcel_wine_ex_syd[row_index_max, col_index_max]
+  return(charge_value)
+}
+
+output_j_2$charge_value_max_incgst <- mapply(extract_charge_value_max_incgst, output_j_2$row_index_max, output_j_2$col_index_max)
+
+output_j_2$base_charge_incgst <- output_j_2$charge_value_max_incgst
+
+write.csv(output_j_2, file = "output_j_2.csv")
+
+
+##############
 
 #### base charge for Regular.VIC ####
 
@@ -128,7 +245,7 @@ calculate_final_charge <- function(charge_value_max_incgst , weight_category_max
 output_a_2$base_charge_incgst <- mapply(calculate_final_charge, output_a_2$charge_value_max_incgst , output_a_2$weight_category_max, output_a_2$max_weight, output_a_2$row_index_max)
 
 #### Base charge for Express.VIC ####
-#sel
+
 output_b1 <- subset(output_a, uplift_service %in% c("Express.VIC"))
 
 #Determine the indexes to use to query the new base charge zone sheet 
@@ -309,14 +426,17 @@ output_h <- subset_and_operate(output_a, c("reg_eparcel_returns", "reg_ep_call_f
 
 
 #### combine all DFs together ######
-output_all_services  <- rbind(output_a_2, output_b_2, output_c_2, output_d_2, output_f, output_g, output_h)
+output_all_services  <- rbind(output_a_2, output_b_2, output_c_2, output_d_2, output_f, output_g, output_h, output_i_2, output_j_2)
 
 write.csv(output_all_services, file = "output_all_services.csv")
 
 #### additional mapping ####
 # get charge_value_exgst 
 
-output_all_services$base_charge_exgst <- (output_all_services$base_charge_incgst /110) *100
+output_all_services$base_charge_exgst <- ifelse(output_all_services$is_gst_free_zone == 'No', 
+                                                (output_all_services$base_charge_incgst / 110) * 100, 
+                                                output_all_services$base_charge_incgst)
+write.csv(output_all_services, file = "output_all_services.csv")
 
 # calculate fuel surcharge based on ex gst
 output_all_services$fuel_surcharge <- output_all_services$base_charge_exgst * fuel_surcharge_pct
