@@ -34,7 +34,7 @@ cz_post_feb_eparcel_express_ex_syd = read.csv("cz_post_feb_eparcel_express_ex_sy
 cz_post_feb_eparcel_express_ex_syd = read.csv("cz_post_feb_eparcel_express_ex_syd.csv", head=TRUE, row.names = 1,  sep=",")
 cz_post_feb_eparcel_wine_ex_mel = read.csv("cz_post_feb_eparcel_wine_ex_mel.csv", head=TRUE, row.names = 1,  sep=",")
 cz_post_feb_eparcel_wine_ex_syd = read.csv("cz_post_feb_eparcel_wine_ex_syd.csv", head=TRUE, row.names = 1,  sep=",")
-
+cz_post_feb_eparcel_international_express_merch = read.csv("cz_post_feb_eparcel_international_express_merch.csv", head=TRUE, row.names = 1,  sep=",")
 
 
 
@@ -65,7 +65,9 @@ bill_cut1$uplift_service <- ifelse(bill_cut1$REGION == "VIC" & bill_cut1$DESCRIP
                                                                                      ifelse(bill_cut1$DESCRIPTION == "eParcel Call For Return", "reg_ep_call_for_return",
                                                                                             ifelse(bill_cut1$REGION == "VIC" & bill_cut1$DESCRIPTION == "EPARCEL WINE STD", "eparcel_wine.VIC",
                                                                                                    ifelse(bill_cut1$REGION == "NSW" & bill_cut1$DESCRIPTION == "EPARCEL WINE STD", "eparcel_wine.NSW",
-                                                         NA))))))))))) 
+                                                                                                          ifelse(bill_cut1$DESCRIPTION == "PACK AND TRACK INTERNATIONAL", "regular_international",
+                                                                                                                 ifelse(bill_cut1$DESCRIPTION == "Express Courier International (eParcel)", "express_international",
+                                                         NA))))))))))))) 
 
 ##### customer code ####
 # Function to extract letters before the first "-"
