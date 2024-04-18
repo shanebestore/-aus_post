@@ -35,8 +35,7 @@ cz_post_feb_eparcel_express_ex_syd = read.csv("cz_post_feb_eparcel_express_ex_sy
 cz_post_feb_eparcel_wine_ex_mel = read.csv("cz_post_feb_eparcel_wine_ex_mel.csv", head=TRUE, row.names = 1,  sep=",")
 cz_post_feb_eparcel_wine_ex_syd = read.csv("cz_post_feb_eparcel_wine_ex_syd.csv", head=TRUE, row.names = 1,  sep=",")
 cz_post_feb_eparcel_international_express_merch = read.csv("cz_post_feb_eparcel_international_express_merch.csv", head=TRUE, row.names = 1,  sep=",")
-
-
+cz_post_feb_eparcel_international_standard = read.csv("cz_post_feb_eparcel_international_standard.csv", head=TRUE, row.names = 1,  sep=",")
 
 
 # custo mark up
@@ -50,7 +49,7 @@ bill_cut1 <- bill[!grepl("charge|surcharge|admin|fuel", bill$DESCRIPTION, ignore
 #bill_cut1 <- bill
 
 #cutting the dataset down to just the metrics we need for ALL of the basic calculations
-bill_cut1 <-  bill_cut1[,  c("REGION", "RECEIVING.COUNTRY", "CUSTOMER", "NAME_1", "NAME_2", "NAME_3", "DESCRIPTION", "BILLING.DOC", "SERVICE.DATE", "CONSIGNMENT.ID", "ARTICLE.ID",   
+bill_cut1 <-  bill_cut1[,  c("REGION", "RECEIVING.COUNTRY", "CUSTOMER", "NAME_1", "NAME_2", "NAME_3", "DESCRIPTION", "BILLING.DOC", "SERVICE.DATE", "TO.ADDRESS", "CONSIGNMENT.ID", "ARTICLE.ID",   
                             "BILLED.LENGTH", "BILLED.WIDTH", "BILLED.HEIGHT", "CUBIC.WEIGHT", "BILLED.WEIGHT", "ACTUAL.WEIGHT", "CHARGE.ZONE", "FROM.STATE", "AVG..UNIT.PRICE" , "AMOUNT.EXCL.TAX")] 
 
 # get the lift service as per uplift card. This covers all thats in the description
@@ -63,10 +62,10 @@ bill_cut1$uplift_service <- ifelse(bill_cut1$REGION == "VIC" & bill_cut1$DESCRIP
                                                                        ifelse(bill_cut1$DESCRIPTION == "Express Post eparcel returns", "exp_eparcel_returns",
                                                                               ifelse(bill_cut1$DESCRIPTION == "eParcel Post Return", "reg_eparcel_returns",
                                                                                      ifelse(bill_cut1$DESCRIPTION == "eParcel Call For Return", "reg_ep_call_for_return",
-                                                                                            ifelse(bill_cut1$REGION == "VIC" & bill_cut1$DESCRIPTION == "EPARCEL WINE STD", "eparcel_wine.VIC",
-                                                                                                   ifelse(bill_cut1$REGION == "NSW" & bill_cut1$DESCRIPTION == "EPARCEL WINE STD", "eparcel_wine.NSW",
-                                                                                                          ifelse(bill_cut1$DESCRIPTION == "PACK AND TRACK INTERNATIONAL", "regular_international",
-                                                                                                                 ifelse(bill_cut1$DESCRIPTION == "Express Courier International (eParcel)", "express_international",
+                                                                                            ifelse(bill_cut1$REGION == "VIC" & bill_cut1$DESCRIPTION == "EPARCEL WINE STD", "Wine.VIC",
+                                                                                                   ifelse(bill_cut1$REGION == "NSW" & bill_cut1$DESCRIPTION == "EPARCEL WINE STD", "Wine.NSW",
+                                                                                                          ifelse(bill_cut1$DESCRIPTION == "PACK AND TRACK INTERNATIONAL", "International",
+                                                                                                                 ifelse(bill_cut1$DESCRIPTION == "Express Courier International (eParcel)", "International",
                                                          NA))))))))))))) 
 
 ##### customer code ####

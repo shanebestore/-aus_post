@@ -38,7 +38,7 @@ bill_cut_a$over_max_limits_fee <- ifelse(bill_cut_a$ACTUAL.WEIGHT > 22 | bill_cu
 cz_max_weight <- bill_cut_a$max_weight
 
 # Define the original categorisation function to classify the weight
-categorize_weight_for_express <- function(weight_kg) {
+categorize_weight_for_basic <- function(weight_kg) {
   categories <- sapply(weight_kg, function(w) {
     if (is.na(w)) {
       return("NA")
@@ -91,13 +91,13 @@ categorize_weight_for_wine <- function(weight_kg) {
     } else if (w <= 22) {
       return("X16.01kg_to_22kg")
     } else {
-      return("Above_5kg_for_Wine")
+      return("Above_22kg_for_Wine")
     }
   })
   return(categories)
 }
 
-# Define the new categorisation function for "EPARCEL WINE STD" for VIC and NSW
+# Define the new categorisation function for "International " for VIC and NSW
 categorize_weight_for_international <- function(weight_kg) {
   categories <- sapply(weight_kg, function(w) {
     if (is.na(w)) {
@@ -126,16 +126,21 @@ categorize_weight_for_international <- function(weight_kg) {
 #} else {
 #  weight_category_max <- categorize_weight_for_express(cz_max_weight)
 #}
+weight_category_max <- character(nrow(bill_cut_a))
 
-
-
-if (any(bill_cut_a$uplift_service %in% c("eparcel_wine.VIC", "eparcel_wine.NSW"))) {
-  weight_category_max <- categorize_weight_for_wine(cz_max_weight)
-} else if (any(bill_cut_a$uplift_service %in% c("regular_international", "express_international"))) {
-  weight_category_max <- categorize_weight_for_international(cz_max_weight)
-} else {
-  weight_category_max <- categorize_weight(cz_max_weight)
+for (i in 1:nrow(bill_cut_a)) {
+  service <- bill_cut_a$uplift_service[i]
+  weight <- cz_max_weight[i]
+  
+  if (service %in% c("Wine.VIC", "Wine.NSW")) {
+    weight_category_max[i] <- categorize_weight_for_wine(weight)
+  } else if (service %in% c("regular_international", "express_international")) {
+    weight_category_max[i] <- categorize_weight_for_international(weight)
+  } else {
+    weight_category_max[i] <- categorize_weight_for_basic(weight)
+  }
 }
+
 
 output_a <- cbind(bill_cut_a, weight_category_max)
 
@@ -143,7 +148,7 @@ output_a <- cbind(bill_cut_a, weight_category_max)
 
 ##############
 
-#### base charge for Regular.VIC ####
+#### Base charge for Regular.VIC ####
 
 # cut the dataset down to correct uplift service
 output_a1 <- subset(output_a, uplift_service %in% c("Regular.VIC"))
@@ -241,7 +246,7 @@ calculate_final_charge <- function(charge_value_max_incgst, weight_category_max,
 output_b_2$base_charge_incgst <- mapply(calculate_final_charge, output_b_2$charge_value_max_incgst, output_b_2$weight_category_max, output_b_2$max_weight, output_b_2$row_index_max)
 
 
-##### Regular.NSW  ####
+#### Base charge for Regular.NSW  ####
 
 output_c1 <- subset(output_a, uplift_service %in% c("Regular.NSW"))
 
@@ -290,7 +295,7 @@ calculate_final_charge <- function(charge_value_max_incgst, weight_category_max,
 output_c_2$base_charge_incgst <- mapply(calculate_final_charge, output_c_2$charge_value_max_incgst, output_c_2$weight_category_max, output_c_2$max_weight, output_c_2$row_index_max)
 
 
-#### Express.VIC ####
+#### Base charge for Express.NSW ####
 
 output_d1 <- subset(output_a, uplift_service %in% c("Express.NSW"))
 
@@ -338,7 +343,7 @@ calculate_final_charge <- function(charge_value_max_incgst, weight_category_max,
 
 output_d_2$base_charge_incgst <- mapply(calculate_final_charge, output_d_2$charge_value_max_incgst, output_d_2$weight_category_max, output_d_2$max_weight, output_d_2$row_index_max)
 
-#### Express Post Parcels (BYO up to 5kg) ####
+#### Base charge for Express Post Parcels (BYO up to 5kg) ####
 # to be tested when I can bring this in
 #output_e <- subset(output_a, uplift_service %in% c("EPP_fivekg"))
 
@@ -346,7 +351,7 @@ output_d_2$base_charge_incgst <- mapply(calculate_final_charge, output_d_2$charg
 #                                                ex_pp_byo_up_to_5kg,
 #                                                NA)
 
-#### eparcel return to sender, Express Post eparcel returns, eParcel Post Return (Reg)  ####
+#### Base charge for eparcel return to sender, Express Post eparcel returns, eParcel Post Return (Reg)  ####
 # Function to subset data based on uplift_service and perform operations
 subset_and_operate <- function(data, service, fee) {
   subset_data <- subset(data, uplift_service %in% service)
@@ -375,7 +380,7 @@ output_h <- subset_and_operate(output_a, c("reg_eparcel_returns", "reg_ep_call_f
 #### base charge for eparcel_wine.VIC ####
 
 # cut the dataset down to correct uplift service
-output_i1 <- subset(output_a, uplift_service %in% c("eparcel_wine.VIC"))
+output_i1 <- subset(output_a, uplift_service %in% c("Wine.VIC"))
 
 #Determine the indexes to use to query the new base charge zone sheet 
 
@@ -417,7 +422,7 @@ write.csv(output_i_2, file = "output_i_2.csv")
 #### base charge for eparcel_wine.NSW #####
 
 # cut the dataset down to correct uplift service
-output_j1 <- subset(output_a, uplift_service %in% c("eparcel_wine.NSW"))
+output_j1 <- subset(output_a, uplift_service %in% c("Wine.NSW"))
 
 #Determine the indexes to use to query the new base charge zone sheet 
 
@@ -456,54 +461,107 @@ output_j_2$base_charge_incgst <- output_j_2$charge_value_max_incgst
 write.csv(output_j_2, file = "output_j_2.csv")
 
 ######################
-#### International express ####
-
-
-output_k1 <- subset(output_a, uplift_service %in% c("express_international"))
-
+#### Base charge for International express ####
+# have to return to international as a whole to give us the logic to determine the correct per KG multiplication
+#
+# using the description here
+#output_k1 <- subset(output_a, DESCRIPTION  %in% c("Express Courier International (eParcel)"))
+#
 #Determine the indexes to use to query the new base charge zone sheet 
-
+#
 # find the row and column number to reference against z_c
-col_name_max<- as.character(output_k1$weight_category_max)
-col_index_max <- unlist(lapply(output_k1$weight_category_max, function(col_name_max) {
-  which(colnames(cz_post_feb_eparcel_international_express_merch) == col_name_max)
-}))
+#col_name_max<- as.character(output_k1$weight_category_max)
+#col_index_max <- unlist(lapply(output_k1$weight_category_max, function(col_name_max) {
+#  which(colnames(cz_post_feb_eparcel_international_express_merch) == col_name_max)
+#}))
+#
+#row_name_max<- as.character(output_k1$CHARGE.ZONE)
+#row_index_max <- unlist(lapply(row_name_max, function(row_name_max) {
+#  index <- which(rownames(cz_post_feb_eparcel_international_express_merch) == row_name_max)
+#  if (length(index) == 0) {
+#    NA
+#  } else {
+#    index
+#  }
+#}))
 
-row_name_max<- as.character(output_k1$CHARGE.ZONE)
-row_index_max <- unlist(lapply(row_name_max, function(row_name_max) {
-  index <- which(rownames(cz_post_feb_eparcel_international_express_merch) == row_name_max)
-  if (length(index) == 0) {
-    NA
-  } else {
-    index
-  }
-}))
 
-
-output_k_2 <-cbind(output_k1, (cbind(row_index_max, col_index_max)))
+#output_k_2 <-cbind(output_k1, (cbind(row_index_max, col_index_max)))
 
 # query new base charge rate 
 # Function to extract values from charge zone dataset based on indices
 
-extract_charge_value_max_incgst <- function(row_index_max, col_index_max) {
-  charge_value <- cz_post_feb_eparcel_international_express_merch[row_index_max, col_index_max]
-  return(charge_value)
-}
+#extract_charge_value_max_incgst <- function(row_index_max, col_index_max) {
+#  charge_value <- cz_post_feb_eparcel_international_express_merch[row_index_max, col_index_max]
+#  return(charge_value)
+#}
+#
+#output_k_2$charge_value_max_incgst <- mapply(extract_charge_value_max_incgst, output_k_2$row_index_max, output_k_2$col_index_max)
+#
+#
+## Function to calculate charge based on charge_value_max_incgst and Per_Kg_#. Also does the calc if  weight_category_max == "X2.01kg_to_20kg"
+#calculate_final_charge <- function(charge_value_max_incgst, weight_category_max, max_weight, row_index_max) {
+#  if (weight_category_max == "X2.01kg_to_20kg") {
+#    per_kg_value <- cz_post_feb_eparcel_international_express_merch[row_index_max, "Per_Kg"]
+#    return(charge_value_max_incgst + (per_kg_value * (ceiling(max_weight))))
+#  } else {
+#    return(charge_value_max_incgst)  
+#  }
+#}
+#
+#output_k_2$base_charge_incgst <- mapply(calculate_final_charge, output_k_2$charge_value_max_incgst, output_k_2$weight_category_max, output_k_2$max_weight, output_k_2$row_index_max)
 
-output_k_2$charge_value_max_incgst <- mapply(extract_charge_value_max_incgst, output_k_2$row_index_max, output_k_2$col_index_max)
+#### Base charge fo PACK AND TRACK INTERNATIONAL
+
+# using the description here
+#output_k1 <- subset(output_a, DESCRIPTION  %in% c("PACK AND TRACK INTERNATIONAL"))
+
+#Determine the indexes to use to query the new base charge zone sheet 
+
+# find the row and column number to reference against z_c
+#col_name_max<- as.character(output_k1$weight_category_max)
+#col_index_max <- unlist(lapply(output_k1$weight_category_max, function(col_name_max) {
+#  which(colnames(cz_post_feb_eparcel_international_standard) == col_name_max)
+#}))
+#
+#row_name_max<- as.character(output_k1$CHARGE.ZONE)
+#row_index_max <- unlist(lapply(row_name_max, function(row_name_max) {
+#  index <- which(rownames(cz_post_feb_eparcel_international_express_merch) == row_name_max)
+#  if (length(index) == 0) {
+#    NA
+#  } else {
+#    index
+#  }
+#}))
+#
+#
+#output_k_2 <-cbind(output_k1, (cbind(row_index_max, col_index_max)))
+
+# query new base charge rate 
+# Function to extract values from charge zone dataset based on indices
+
+#extract_charge_value_max_incgst <- function(row_index_max, col_index_max) {
+#  charge_value <- cz_post_feb_eparcel_international_express_merch[row_index_max, col_index_max]
+#  return(charge_value)
+#}
+#
+#output_k_2$charge_value_max_incgst <- mapply(extract_charge_value_max_incgst, output_k_2$row_index_max, output_k_2$col_index_max)
+#
+#
+# Function to calculate charge based on charge_value_max_incgst and Per_Kg_#. Also does the calc if  weight_category_max == "X2.01kg_to_20kg"
+#calculate_final_charge <- function(charge_value_max_incgst, weight_category_max, max_weight, row_index_max) {
+#  if (weight_category_max == "X2.01kg_to_20kg") {
+#    per_kg_value <- cz_post_feb_eparcel_international_express_merch[row_index_max, "Per_Kg"]
+#    return(charge_value_max_incgst + (per_kg_value * (ceiling(max_weight))))
+#  } else {
+#    return(charge_value_max_incgst)  
+#  }
+#}
+
+#output_k_2$base_charge_incgst <- mapply(calculate_final_charge, output_k_2$charge_value_max_incgst, output_k_2$weight_category_max, output_k_2$max_weight, output_k_2$row_index_max)
 
 
-# Function to calculate charge based on charge_value_max_incgst and Per_Kg_#. Also does the calc if  weight_category_max == "Basic"
-calculate_final_charge <- function(charge_value_max_incgst, weight_category_max, max_weight, row_index_max) {
-  if (weight_category_max == "X2.01kg_to_20kg") {
-    per_kg_value <- cz_post_feb_eparcel_international_express_merch[row_index_max, "Per_Kg"]
-    return(charge_value_max_incgst + (per_kg_value * (ceiling(max_weight))))
-  } else {
-    return(charge_value_max_incgst)  
-  }
-}
 
-output_k_2$base_charge_incgst <- mapply(calculate_final_charge, output_k_2$charge_value_max_incgst, output_k_2$weight_category_max, output_k_2$max_weight, output_k_2$row_index_max)
 
 
 ######################
@@ -518,6 +576,11 @@ write.csv(output_all_services, file = "output_all_services.csv")
 
 #### additional mapping ####
 # get charge_value_exgst 
+
+output_all_services <- output_all_services %>%
+  arrange(CONSIGNMENT.ID, TO.ADDRESS) %>%
+  group_by(CONSIGNMENT.ID, TO.ADDRESS) %>%
+  mutate(base_charge_incgst = base_charge_incgst - 1.50 * (row_number() - 1))
 
 output_all_services$base_charge_exgst <- ifelse(output_all_services$is_gst_free_zone == 'No', 
                                                 (output_all_services$base_charge_incgst / 110) * 100, 
@@ -539,7 +602,7 @@ output_all_services$sec_mng_chrg <- ifelse(output_all_services$DESCRIPTION == "E
                                            NA)
 output_all_services$sec_mng_gst <- output_all_services$sec_mng_chrg * gst
 
-
+write.csv(output_all_services, file = "output_all_services.csv")
 
 ##### multiply by customer uplift   ####
 # first step is to find the indices 
@@ -567,8 +630,8 @@ row_index_uplift <- numeric(nrow(output_all_services))
 
 # Iterate over each row
 for (i in 1:nrow(output_all_services)) {
-  if (output_all_services$DESCRIPTION[i] %in% c("Parcel Post with Signature", "Express Post with Signature")) {
-    # For rows with specified DESCRIPTIONs, find column and row indices
+  if (output_all_services$DESCRIPTION[i] %in% c("Parcel Post with Signature", "Express Post with Signature", "EPARCEL WINE STD")) {
+    # For rows with specified DESCRIPTION, find column and row indices
     col_name_uplift <- as.character(output_all_services$uplift_service[i])
     col_index_uplift[i] <- which(colnames(customer_uplift_march_24) == col_name_uplift)
     
@@ -588,7 +651,7 @@ for (i in 1:nrow(output_all_services)) {
   }
 }
 
-
+#, "EPARCEL WINE STD", "Express Courier International (eParcel)"
 
 ############
 
