@@ -13,7 +13,7 @@ names(bill)[names(bill) == "ARTICLE.ID"] <- "article_id"
 names(output_all_services_2)[names(output_all_services_2) == "ARTICLE.ID"] <- "article_id"
 
 # Specify columns to merge from output_all_services_2
-merge_cols <- c("uplift_service", "DESCRIPTION", "BILLING.DOC", "article_id", "base_charge_incgst", "base_charge_exgst", "charge_value_uplift", "uplift_figure_exgst", "charge_to_custo_exgst", "cubic_weight", "max_weight", "fuel_surcharge", "fuel_gst", "sec_mng_chrg", "sec_mng_gst", "over_max_limits_fee")
+merge_cols <- c("uplift_service", "DESCRIPTION", "BILLING.DOC", "article_id", "base_charge_incgst", "base_charge_exgst", "base_charge_tax", "charge_value_uplift", "uplift_figure_exgst", "charge_to_custo_exgst", "cubic_weight", "max_weight", "fuel_surcharge", "fuel_gst", "sec_mng_chrg", "sec_mng_gst", "over_max_limits_fee")
 
 # Merge bill and selected columns from output_all_services_2 by "article_id"
 final_output <- merge(bill, output_all_services_2[, merge_cols], by = c("article_id", "BILLING.DOC" , "DESCRIPTION"), all = TRUE)
@@ -24,7 +24,7 @@ avg_unit_price_index <- which(names(final_output) == "AMOUNT.INCL.TAX")
 
 # Insert new columns after "AVG..UNIT.PRICE"
 final_output <- cbind(final_output[, 1:avg_unit_price_index],
-                      final_output[, c("base_charge_incgst","base_charge_exgst", "charge_value_uplift", "uplift_figure_exgst", "charge_to_custo_exgst")],
+                      final_output[, c("base_charge_incgst","base_charge_exgst", "base_charge_tax", "charge_value_uplift", "uplift_figure_exgst", "charge_to_custo_exgst")],
                       final_output[, (avg_unit_price_index + 1):ncol(final_output)])
 
 
@@ -33,7 +33,7 @@ fuel_gst_index <- which(names(final_output) == "FUEL.GST")
 
 # Insert new columns after "AVG..UNIT.PRICE"
 final_output <- cbind(final_output[, 1:fuel_gst_index  ],
-                      final_output[, c("fuel_surcharge" ,"fuel_gst", "sec_mng_chrg", "over_max_limits_fee")],
+                      final_output[, c("fuel_surcharge" ,"fuel_gst", "sec_mng_chrg", "sec_mng_gst", "over_max_limits_fee")],
                       final_output[, (fuel_gst_index  + 1):ncol(final_output)])
 
 
@@ -46,7 +46,7 @@ final_output <- cbind(final_output[, 1:billed_weight_index  ],
                       final_output[, (billed_weight_index  + 1):ncol(final_output)])
 
 
-
+#final_output_test  <- subset(final_output , article_id %in% c('CH148796820AU'))
 
 
 # Write final_output to a CSV file

@@ -1,5 +1,44 @@
 
 
+
+
+
+
+
+
+# calculate the Fuel surcharge tax free 
+#output_all_services$fuel_surcharge_tax_free  <-  ifelse(output_all_services$is_gst_free == "Yes",
+#                                                ((((output_all_services$fuel_surcharge/110)*100)/110) * 100), 
+#                                                NA)
+
+
+
+# service
+#col_name_uplift<- as.character(output_all_services$uplift_service)
+#col_index_uplift <- unlist(lapply(output_all_services$uplift_service, function(col_name_uplift) {
+#  which(colnames(customer_uplift_march_24) == col_name_uplift)
+#}))
+
+# customer
+#row_name_uplift<- as.character(output_all_services$customer_code)
+#row_index_uplift <- unlist(lapply(output_all_services$customer_code, function(row_name_uplift) {
+#  index <- which(rownames(customer_uplift_march_24) == row_name_uplift)
+# if (length(index) == 0) {
+#    NA
+#  } else {
+#    index
+#  }
+#}))
+
+
+
+
+
+
+
+
+
+
 #factor <- 250  # Change this to your desired factor
 
 # Sum the specified columns and multiply by the factor

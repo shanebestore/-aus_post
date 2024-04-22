@@ -17,7 +17,9 @@ library(dplyr)
 
 #bill = read.csv("ESTORELOGISTICSPTYLTD_0006794750_20240303_1013048181.csv", head=TRUE, sep=",")
 #bill = read.csv("ESTORELOGISTICSPTYLTD_0006794750_20240219_1013016084.csv", head=TRUE, sep=",")
-bill = read.csv("1013111472-5890569129689088.csv", head=TRUE, sep=",")
+#bill = read.csv("1013111472-5890569129689088.csv", head=TRUE, sep=",")
+#1013156007-5729374082957312
+bill = read.csv("1013156007-5729374082957312.csv", head=TRUE, sep=",")
 
 # pre feb base rates. Left in for pulling comparison calcs
 #cz_pre_feb_eparcel_regular_ex_mel = read.csv("cz_pre_feb_eparcel_regular_ex_mel.csv", head=TRUE, row.names = 1,  sep=",")
@@ -50,7 +52,7 @@ bill_cut1 <- bill[!grepl("charge|surcharge|admin|fuel", bill$DESCRIPTION, ignore
 
 #cutting the dataset down to just the metrics we need for ALL of the basic calculations
 bill_cut1 <-  bill_cut1[,  c("REGION", "RECEIVING.COUNTRY", "CUSTOMER", "NAME_1", "NAME_2", "NAME_3", "DESCRIPTION", "BILLING.DOC", "SERVICE.DATE", "TO.ADDRESS", "CONSIGNMENT.ID", "ARTICLE.ID",   
-                            "BILLED.LENGTH", "BILLED.WIDTH", "BILLED.HEIGHT", "CUBIC.WEIGHT", "BILLED.WEIGHT", "ACTUAL.WEIGHT", "CHARGE.ZONE", "FROM.STATE", "AVG..UNIT.PRICE" , "AMOUNT.EXCL.TAX")] 
+                            "BILLED.LENGTH", "BILLED.WIDTH", "BILLED.HEIGHT", "CUBIC.WEIGHT", "BILLED.WEIGHT", "ACTUAL.WEIGHT", "CHARGE.ZONE", "FROM.STATE", "AVG..UNIT.PRICE" , "AMOUNT.EXCL.TAX", "DECLARED.WEIGHT")] 
 
 # get the lift service as per uplift card. This covers all thats in the description
 bill_cut1$uplift_service <- ifelse(bill_cut1$REGION == "VIC" & bill_cut1$DESCRIPTION == "Parcel Post with Signature", "Regular.VIC",
