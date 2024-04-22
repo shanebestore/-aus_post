@@ -81,7 +81,7 @@ bill_cut1$customer_code <- sapply(bill_cut1$NAME_1, extract_letters)
 
 # Define a function to apply the logic
 is_gst_free <- function(zone) {
-  ifelse(zone %in% c("NF", "W4", "AAT"), "Yes", "No")
+  ifelse(zone %in% c("NF", "W4", "AAT", "Z1", "Z2", "Z3", "Z4", "Z5", "Z6", "Z7", "Z8", "Z9" ), "Yes", "No")
 }
 
 # Apply the function to create the new column
