@@ -8,6 +8,7 @@ bill_cut_a <-  bill_cut1
 #bill_cut_a  <- subset(bill_cut_a , DESCRIPTION %in% c('PACK AND TRACK INTERNATIONAL'))
 #bill_cut_a  <- subset(bill_cut_a , ARTICLE.ID %in% c('CH148796820AU'))
 #bill_cut_a  <- subset(bill_cut_a , ARTICLE.ID %in% c('CH148357531AU'))
+#bill_cut_a  <- subset(bill_cut_a , ARTICLE.ID %in% c('ET240195739AU')) #p&t
 
 #### Cubic factor ####
 # leaving this here as it might only relate to basic charges
@@ -385,7 +386,6 @@ output_g <- subset_and_operate(output_a, "exp_eparcel_returns", exp_eparcel_retu
 output_h <- subset_and_operate(output_a, c("reg_eparcel_returns", "reg_ep_call_for_return"), reg_eparcel_returns_fee)
 
 
-######## eparcel wine ########
 #### base charge for eparcel_wine.VIC ####
 
 # cut the dataset down to correct uplift service
@@ -465,9 +465,6 @@ output_j_2$charge_value_max_incgst <- mapply(extract_charge_value_max_incgst, ou
 
 output_j_2$base_charge_incgst <- output_j_2$charge_value_max_incgst
 
-
-
-######################
 #### Base charge for PACK AND TRACK INTERNATIONAL ####
 # have to return to international as a whole to give us the logic to determine the correct per KG multiplication
 
@@ -542,17 +539,11 @@ calculate_final_charge <- function(charge_value_max_incgst, weight_category_max,
 
 
 output_l_2$base_charge_incgst <- mapply(calculate_final_charge, output_l_2$charge_value_max_incgst, output_l_2$weight_category_max, output_l_2$max_weight, output_l_2$row_index_max)
-
-
-write.csv(output_l_2, file = "output_l_2.csv")
-
-
 sapply(output_l_2, class)
 
 
 
-####################
-#### Base charge fo Express Courier International (eParcel)
+#### Base charge fo Express Courier International (eParcel) ####
 # using the description here
 output_k1 <- subset(output_a, DESCRIPTION  %in% c("Express Courier International (eParcel)"))
 
@@ -576,6 +567,7 @@ row_index_max <- unlist(lapply(row_name_max, function(row_name_max) {
 
 
 output_k_2 <-cbind(output_k1, (cbind(row_index_max, col_index_max)))
+sapply(output_k_2, class)
 
 # query new base charge rate 
 # Function to extract values from charge zone dataset based on indices
@@ -746,7 +738,7 @@ output_all_services_2$charge_to_custo_exgst <- ifelse(is.na(output_all_services_
 output_all_services_2 <- output_all_services_2
 
 
-#output_all_services_2 <- subset(output_all_services_2 , ARTICLE.ID %in% c('CH148796820AU'))
+#output_all_services_2 <- subset(output_all_services_2 , ARTICLE.ID %in% c('ET239232669AU'))
 ##### write to CSV ####
 
 write.csv(output_all_services_2, file = "output_all_services_2.csv")
