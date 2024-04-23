@@ -1,7 +1,9 @@
 head(final_output)
 
-final_output_b <- final_output
+#final_output_b <- final_output
 #final_output_b  <- subset(final_output_b , NAME_1 %in% c('AGN - Ambition Group NZ - MW1'))
+final_output_b  = read.csv("final_output.csv", head=TRUE, sep=",")
+head(final_output_b)
 
 # declare a data.frame
 invoice_test <- data.frame(
@@ -65,12 +67,23 @@ invoice_test_post_feb$average_uplift_figure_exgst <- mean(final_output$uplift_fi
 
 
 
+#### break down by customer #### 
+# first clean out the rejected 
+
+final_output_c <- final_output_b %>%
+  filter(!(weight_category_max %in% c("Above_22kg_for_Wine", "Above_20kg_for_international")))
 
 
+avg_base_charge_exgst <- final_output_c %>%
+  group_by(NAME_1, weight_category_max) %>% 
+  summarise(base_charge_exgst = mean(base_charge_exgst, na.rm = TRUE))
+print(avg_base_charge_exgst)
 
 
-
-
+sum_base_charge_exgst <- final_output_c %>%
+  group_by(NAME_1, weight_category_max) %>% 
+  summarise(base_charge_exgst = sum(base_charge_exgst, na.rm = TRUE))
+print(avg_base_charge_exgst)
 
 
 
