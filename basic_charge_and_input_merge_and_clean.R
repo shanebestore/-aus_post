@@ -13,7 +13,7 @@ names(bill)[names(bill) == "ARTICLE.ID"] <- "article_id"
 names(output_all_services_2)[names(output_all_services_2) == "ARTICLE.ID"] <- "article_id"
 
 # Specify columns to merge from output_all_services_2
-merge_cols <- c("uplift_service", "DESCRIPTION", "BILLING.DOC", "article_id", "base_charge_incgst", "base_charge_exgst", "base_charge_tax", "charge_value_uplift", "uplift_figure_exgst", "charge_to_custo_exgst", "cubic_weight", "max_weight", "CHARGE.ZONE", "fuel_surcharge", "fuel_gst", "sec_mng_chrg", "sec_mng_gst", "over_max_limits_fee", "weight_category_max")
+merge_cols <- c("customer_code", "uplift_service", "DESCRIPTION", "BILLING.DOC", "article_id", "base_charge_incgst", "base_charge_exgst", "base_charge_tax", "charge_value_uplift", "uplift_figure_exgst", "charge_to_custo_exgst", "cubic_weight", "max_weight", "CHARGE.ZONE", "fuel_surcharge", "fuel_gst", "sec_mng_chrg", "sec_mng_gst", "over_max_limits_fee", "weight_category_max")
 
 # Select only the merge_cols from output_all_services_2
 selected_output_all_services_2 <- output_all_services_2[, merge_cols]
@@ -50,7 +50,7 @@ final_output <- cbind(final_output[, 1:billed_weight_index  ],
 
 
 # Write final_output to a CSV file
-write.csv(final_output, file = "final_output.csv")
+#write.csv(final_output, file = "final_output.csv")
 
 # Get the current date
 #current_date <- Sys.Date()

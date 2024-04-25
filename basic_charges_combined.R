@@ -19,13 +19,13 @@ bill_cut_a$cubic_size <- cubic_size
 bill_cut_a$cubic_weight <- cubic_size * factor
 over_max_limits_fee <-100
 #ex_pp_byo_up_to_5kg <-'Express Post Parcels (BYO up to 5kg)'
-
-#### pull the max of cubic_weight vs billed_weight #########
-#bill_cut_a <- mutate(bill_cut_a, max_weight = pmax(cubic_weight, BILLED.WEIGHT))
 bill_cut_a <- mutate(bill_cut_a, 
-                     max_weight = ifelse(cubic_weight == 0 & BILLED.WEIGHT == 0, 
-                                         DECLARED.WEIGHT, 
-                                         pmax(cubic_weight, BILLED.WEIGHT)))
+                     max_weight = ifelse(uplift_service == 'International', 
+                                         ifelse(BILLED.WEIGHT == 0, DECLARED.WEIGHT, BILLED.WEIGHT),
+                                         ifelse(cubic_weight == 0 & BILLED.WEIGHT == 0, 
+                                                DECLARED.WEIGHT, 
+                                                pmax(cubic_weight, BILLED.WEIGHT))))
+
 
 
 #### Declare the charges ####
@@ -41,11 +41,7 @@ reg_eparcel_returns_fee <- 12.43
 bill_cut_a$over_max_limits_fee <- ifelse(bill_cut_a$ACTUAL.WEIGHT > 22 | bill_cut_a$BILLED.LENGTH > 105 | bill_cut_a$cubic_size > 0.25, 100, NA)
 
 #### Classifying weights ####
-# leaving this in as we are classfifying the new max weight
 cz_max_weight <- bill_cut_a$max_weight
-
-# Define the original categorisation function to classify the weight
-
 
 # Define the new categorisation function for "EPARCEL WINE STD" for VIC and NSW
 categorize_weight_for_wine <- function(weight_kg) {
@@ -95,6 +91,7 @@ categorize_weight_for_international <- function(weight_kg) {
   return(categories)
 }
 
+# Define the new categorisation function for "Basic charge" for VIC and NSW
 categorize_weight_for_basic <- function(weight_kg) {
   categories <- sapply(weight_kg, function(w) {
     if (is.na(w)) {
@@ -128,16 +125,10 @@ categorize_weight_for_basic <- function(weight_kg) {
   return(categories)
 }
 
-# Determine which categorization function to use based on uplift_service
-#if (any(bill_cut_a$uplift_service %in% c("eparcel_wine.VIC", "eparcel_wine.NSW"))) {
-#  weight_category_max <- categorize_weight_for_wine(cz_max_weight)
-#} else {
-#  weight_category_max <- categorize_weight_for_express(cz_max_weight)
-#}
+
 weight_category_max <- character(nrow(bill_cut_a))
 
 # description here is better as we the weight categories are for the rates card, not the uplift service. 
-#international standard will have to be done too
 for (i in 1:nrow(bill_cut_a)) {
   DESCRIPTION  <- bill_cut_a$DESCRIPTION [i]
   weight <- cz_max_weight[i]
@@ -151,13 +142,9 @@ for (i in 1:nrow(bill_cut_a)) {
   }
 }
 
-
 output_a <- cbind(bill_cut_a, weight_category_max)
 
-
-
-##############
-
+#### Calculate the base charge ####
 #### Base charge for Regular.VIC ####
 
 # cut the dataset down to correct uplift service
@@ -385,7 +372,6 @@ output_g <- subset_and_operate(output_a, "exp_eparcel_returns", exp_eparcel_retu
 # eParcel Post Return (Reg)
 output_h <- subset_and_operate(output_a, c("reg_eparcel_returns", "reg_ep_call_for_return"), reg_eparcel_returns_fee)
 
-
 #### base charge for eparcel_wine.VIC ####
 
 # cut the dataset down to correct uplift service
@@ -603,7 +589,7 @@ output_all_services  <- rbind(output_a_2, output_b_2, output_c_2, output_d_2, ou
 #write.csv(output_all_services, file = "output_all_services.csv")
 
 #### additional mapping ####
-# get charge_value_exgst 
+# 1.50 mark up for wine tbc
 
 #output_all_services <- output_all_services %>%
 #  arrange(CONSIGNMENT.ID, TO.ADDRESS) %>%
@@ -612,7 +598,6 @@ output_all_services  <- rbind(output_a_2, output_b_2, output_c_2, output_d_2, ou
 #    new_base_charge_incgst = base_charge_incgst - 1.50 * (row_number() - 1)
 #  ) %>%
 #  ungroup()
-
 
 
 output_all_services$base_charge_exgst <- ifelse(output_all_services$is_gst_free_zone == 'No', 
@@ -634,7 +619,6 @@ output_all_services$sec_mng_chrg <- ifelse(output_all_services$DESCRIPTION == "E
                                            NA)
 output_all_services$sec_mng_gst <- output_all_services$sec_mng_chrg * gst
 
-#write.csv(output_all_services, file = "output_all_services.csv")
 
 ##### multiply by customer uplift   ####
 # first step is to find the indices 
@@ -645,7 +629,8 @@ row_index_uplift <- numeric(nrow(output_all_services))
 
 # Iterate over each row
 for (i in 1:nrow(output_all_services)) {
-  if (output_all_services$DESCRIPTION[i] %in% c("Parcel Post with Signature", "Express Post with Signature", "EPARCEL WINE STD", "Express Courier International (eParcel)")) {
+  if (output_all_services$DESCRIPTION[i] %in% c("Parcel Post with Signature", "Express Post with Signature", "EPARCEL WINE STD", "Express Courier International (eParcel)", 
+                                                "PACK AND TRACK INTERNATIONAL")) {
     # For rows with specified DESCRIPTION, find column and row indices
     col_name_uplift <- as.character(output_all_services$uplift_service[i])
     col_index_uplift[i] <- which(colnames(customer_uplift_march_24) == col_name_uplift)
@@ -666,22 +651,12 @@ for (i in 1:nrow(output_all_services)) {
   }
 }
 
-#, "EPARCEL WINE STD", "Express Courier International (eParcel)"
 
-############
+
 
 output_all_services_2 <-cbind(output_all_services, (cbind(row_index_uplift, col_index_uplift)))
 
-#write.csv(output_all_services_2, file = "output_all_services_2.csv")
-
-# query uplift sheet to find uplift % ####
-
-# Function to extract values from charge zone dataset based on indices
-#extract_charge_value_uplift<- function(row_index_uplift, col_index_uplift) {
-#  charge_value <- customer_uplift_march_24[row_index_uplift, col_index_uplift]
- # return(charge_value)
-#}
-###########################
+# query to find uplift
 extract_charge_value_uplift <- function(row_index_uplift, col_index_uplift) {
   if (is.na(row_index_uplift) || is.na(col_index_uplift)) {
     return(0)
@@ -690,10 +665,9 @@ extract_charge_value_uplift <- function(row_index_uplift, col_index_uplift) {
     return(charge_value)
   }
 }
-#################################
+
 output_all_services_2$charge_value_uplift <- mapply(extract_charge_value_uplift, output_all_services_2$row_index_uplift, output_all_services_2$col_index_uplift)
 
-#write.csv(output_all_services_2, file = "output_all_services_2.csv")
 
 #### multiply base by uplift ####
 # Incgst Convert charge_value_uplift to numeric, handling NA values
@@ -706,9 +680,6 @@ output_all_services_2$charge_value_uplift_numeric_exgst <- ifelse(is.na(output_a
                                                             as.numeric(sub("%", "", output_all_services_2$charge_value_uplift)))
 
 # Incgst Convert base_charge_exgst to numeric, handling NA values
-#output_all_services_2$charge_value_max_incgst_numeric <- ifelse(is.na(output_all_services_2$charge_value_uplift) | is.na(output_all_services_2$base_charge_exgst),
-#                                              NA,
-#                                              as.numeric(gsub("[^0-9.]", "", output_all_services_2$base_charge_exgst)))
 #exgst
 output_all_services_2$charge_value_max_exgst_numeric <- ifelse(is.na(output_all_services_2$charge_value_uplift) | is.na(output_all_services_2$base_charge_exgst),
                                                                 NA,
@@ -716,18 +687,12 @@ output_all_services_2$charge_value_max_exgst_numeric <- ifelse(is.na(output_all_
 
 
 # Incgst Calculate the percentage of base_charge_exgst, handling NA values
-#output_all_services_2$uplift_figure_incgst <- ifelse(is.na(output_all_services_2$charge_value_uplift_numeric_incgst) | is.na(output_all_services_2$charge_value_max_incgst_numeric),
-#                                   NA,
-#                                   (output_all_services_2$charge_value_uplift_numeric_incgst / 100) * output_all_services_2$charge_value_max_incgst_numeric)
 #exgst
 output_all_services_2$uplift_figure_exgst <- ifelse(is.na(output_all_services_2$charge_value_uplift_numeric_exgst) | is.na(output_all_services_2$charge_value_max_exgst_numeric),
                                                      NA,
                                                      (output_all_services_2$charge_value_uplift_numeric_exgst / 100) * output_all_services_2$charge_value_max_exgst_numeric)
 
 #  Incgst Filter out NA and non-numeric values before performing addition
-#output_all_services_2$charge_to_custo_incgst <- ifelse(is.na(output_all_services_2$charge_value_max_incgst_numeric) | is.na(output_all_services_2$uplift_figure_incgst) | !is.numeric(output_all_services_2$charge_value_max_incgst_numeric) | !is.numeric(output_all_services_2$uplift_figure_incgst),
-#                                     NA,
- #                                    output_all_services_2$charge_value_max_incgst_numeric + output_all_services_2$uplift_figure_incgst)
 #exgst
 output_all_services_2$charge_to_custo_exgst <- ifelse(is.na(output_all_services_2$charge_value_max_exgst_numeric) | is.na(output_all_services_2$uplift_figure_exgst) | !is.numeric(output_all_services_2$charge_value_max_exgst_numeric) | !is.numeric(output_all_services_2$uplift_figure_exgst),
                                                 NA,
@@ -736,7 +701,6 @@ output_all_services_2$charge_to_custo_exgst <- ifelse(is.na(output_all_services_
 
 # update table name
 output_all_services_2 <- output_all_services_2
-
 
 #output_all_services_2 <- subset(output_all_services_2 , ARTICLE.ID %in% c('ET239232669AU'))
 ##### write to CSV ####
