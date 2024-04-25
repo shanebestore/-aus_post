@@ -47,7 +47,7 @@ cz_max_weight <- bill_cut_a$max_weight
 categorize_weight_for_wine <- function(weight_kg) {
   categories <- sapply(weight_kg, function(w) {
     if (is.na(w)) {
-      return("NA")
+      return("na")
     } else if (w == 0) {
       return("na")
     } else if (w >= 0.00001 & w <= 2) {
@@ -73,7 +73,7 @@ categorize_weight_for_wine <- function(weight_kg) {
 categorize_weight_for_international <- function(weight_kg) {
   categories <- sapply(weight_kg, function(w) {
     if (is.na(w)) {
-      return("NA")
+      return("na")
     } else if (w == 0) {
       return("na")
     } else if (w >= 0.00001 & w <= 0.5) {
@@ -95,7 +95,7 @@ categorize_weight_for_international <- function(weight_kg) {
 categorize_weight_for_basic <- function(weight_kg) {
   categories <- sapply(weight_kg, function(w) {
     if (is.na(w)) {
-      return("NA")
+      return("na")
     } else if (w == 0) {
       return("na")
     } else if (w >= 0.00001 & w <= 0.5) {
@@ -667,6 +667,26 @@ extract_charge_value_uplift <- function(row_index_uplift, col_index_uplift) {
 }
 
 output_all_services_2$charge_value_uplift <- mapply(extract_charge_value_uplift, output_all_services_2$row_index_uplift, output_all_services_2$col_index_uplift)
+
+#### warning cols taken here
+# Col to highlight if we are missing weight information or custo has no uplift
+
+output_all_services_2$warnings <- NA
+
+# Condition 1: If charge_value_uplift is blank or NA or 0
+output_all_services_2$warnings[is.na(output_all_services_2$charge_value_uplift) | 
+                                 output_all_services_2$charge_value_uplift == 0 |
+                                 output_all_services_2$charge_value_uplift == ""] <- "no uplift found"
+
+# Condition 2: If uplift_service == 'International' and BILLED.WEIGHT == 0
+output_all_services_2$warnings[output_all_services_2$uplift_service == 'International' & 
+                                 output_all_services_2$BILLED.WEIGHT == 0] <- "declared value taken"
+
+# Condition 3: If uplift_service != 'International' and cubic_weight == 0 & BILLED.WEIGHT == 0
+output_all_services_2$warnings[output_all_services_2$uplift_service != 'International' & 
+                                 output_all_services_2$cubic_weight == 0 & 
+                                 output_all_services_2$BILLED.WEIGHT == 0] <- "declared value taken"
+
 
 
 #### multiply base by uplift ####
