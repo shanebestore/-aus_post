@@ -55,7 +55,7 @@ invoice_test_post_feb$new_fees_and_surcharges <- sum(final_output3$fuel_surcharg
 invoice_test_post_feb$gst_1 <- sum(final_output3$fuel_gst, na.rm = TRUE) + sum(final_output3$sec_mng_gst, na.rm = TRUE) + sum (final_output3$base_charge_tax, na.rm = TRUE)
 
 
-write.csv(invoice_test_post_feb, file = "invoice_test_post_feb.csv")
+#write.csv(invoice_test_post_feb, file = "invoice_test_post_feb.csv")
 
 ### additionals. not sure where to put these just yet
 final_output$charge_value_uplift <- as.numeric(gsub("%", "", final_output$charge_value_uplift))

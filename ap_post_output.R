@@ -47,7 +47,6 @@ ap_post_supply <- final_output_post [, c("customer_code" , "NAME_1", "MAILING.ST
                                    "BILLED.HEIGHT", "CUBIC.WEIGHT", "BILLED.WEIGHT", "CHARGE.CODE", "RECEIVING.COUNTRY", "CHARGE.ZONE.x", "Service", "QTY", "New_Column"
                                    
 
-                                   
 
                                    
                                    )]

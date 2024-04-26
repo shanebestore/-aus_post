@@ -9,6 +9,8 @@ bill_cut_a <-  bill_cut1
 #bill_cut_a  <- subset(bill_cut_a , ARTICLE.ID %in% c('CH148796820AU'))
 #bill_cut_a  <- subset(bill_cut_a , ARTICLE.ID %in% c('CH148357531AU'))
 #bill_cut_a  <- subset(bill_cut_a , ARTICLE.ID %in% c('ET240195739AU')) #p&t
+#bill_cut_a  <- subset(bill_cut_a , ARTICLE.ID %in% c('2ES500191101000650807'))
+
 
 #### Cubic factor ####
 # leaving this here as it might only relate to basic charges
@@ -463,7 +465,7 @@ output_l1 <- subset(output_a, DESCRIPTION  %in% c("PACK AND TRACK INTERNATIONAL"
 col_name_max<- as.character(output_l1$weight_category_max)
 col_index_max <- unlist(lapply(output_l1$weight_category_max, function(col_name_max) {
   which(colnames(cz_post_feb_eparcel_international_standard) == col_name_max)
-
+  
 }))
 
 row_name_max<- as.character(output_l1$CHARGE.ZONE)
@@ -498,7 +500,7 @@ sapply(output_l_2, class)
 #calculate_final_charge <- function(charge_value_max_incgst, weight_category_max, max_weight, row_index_max) {
 #  if (weight_category_max == "X2.01kg_to_20kg") {
 #    per_kg_value <- cz_post_feb_eparcel_international_standard[row_index_max, "Per_Kg_2"]
- #   return(charge_value_max_incgst + (per_kg_value * (max_weight)))
+#   return(charge_value_max_incgst + (per_kg_value * (max_weight)))
 #  } else {
 #    return(charge_value_max_incgst)  
 #  }
@@ -593,8 +595,8 @@ output_all_services  <- rbind(output_a_2, output_b_2, output_c_2, output_d_2, ou
 
 #output_all_services <- output_all_services %>%
 #  arrange(CONSIGNMENT.ID, TO.ADDRESS) %>%
- # group_by(CONSIGNMENT.ID, TO.ADDRESS) %>%
- # mutate(
+# group_by(CONSIGNMENT.ID, TO.ADDRESS) %>%
+# mutate(
 #    new_base_charge_incgst = base_charge_incgst - 1.50 * (row_number() - 1)
 #  ) %>%
 #  ungroup()
@@ -662,61 +664,82 @@ extract_charge_value_uplift <- function(row_index_uplift, col_index_uplift) {
     return(0)
   } else {
     charge_value <- customer_uplift_march_24[row_index_uplift, col_index_uplift]
-    return(charge_value)
+    
+    # Check if charge_value is blank or NA, if so, return 0
+    if (is.na(charge_value) || charge_value == "") {
+      return(0)
+    } else {
+      return(charge_value)
+    }
   }
 }
+
 
 output_all_services_2$charge_value_uplift <- mapply(extract_charge_value_uplift, output_all_services_2$row_index_uplift, output_all_services_2$col_index_uplift)
 
 #### warning cols taken here
 # Col to highlight if we are missing weight information or custo has no uplift
 
+# Create a new column 'warnings' in output_all_services_2
 output_all_services_2$warnings <- NA
 
-# Condition 1: If charge_value_uplift is blank or NA or 0
+# Condition 1: If charge_value_uplift is blank, NA, or 0
 output_all_services_2$warnings[is.na(output_all_services_2$charge_value_uplift) | 
                                  output_all_services_2$charge_value_uplift == 0 |
                                  output_all_services_2$charge_value_uplift == ""] <- "no uplift found"
 
 # Condition 2: If uplift_service == 'International' and BILLED.WEIGHT == 0
 output_all_services_2$warnings[output_all_services_2$uplift_service == 'International' & 
-                                 output_all_services_2$BILLED.WEIGHT == 0] <- "declared value taken"
+                                 output_all_services_2$BILLED.WEIGHT == 0] <- "declared weight used"
 
-# Condition 3: If uplift_service != 'International' and cubic_weight == 0 & BILLED.WEIGHT == 0
-output_all_services_2$warnings[output_all_services_2$uplift_service != 'International' & 
+# Condition 3: If uplift_service is not one of the specified values and cubic_weight == 0 & BILLED.WEIGHT == 0
+output_all_services_2$warnings[!(output_all_services_2$uplift_service %in% c('International', 
+                                                                             'reg_ep_call_for_return', 
+                                                                             'ep_return_to_sender', 
+                                                                             'reg_eparcel_returns')) & 
                                  output_all_services_2$cubic_weight == 0 & 
-                                 output_all_services_2$BILLED.WEIGHT == 0] <- "declared value taken"
+                                 output_all_services_2$BILLED.WEIGHT == 0] <- "declared weight used"
+
+
+
+# Condition 4: If weight_category_max is NA or 0
+output_all_services_2$warnings[is.na(output_all_services_2$weight_category_max) | 
+                                 output_all_services_2$weight_category_max == 0] <- "no weight detected so 0 charge applied"
+
+# Condition 5: If weight_category_max is "Above_22kg_for_Wine"
+output_all_services_2$warnings[output_all_services_2$weight_category_max == "Above_22kg_for_Wine"] <- "over 22kg for wine"
+
 
 
 
 #### multiply base by uplift ####
 # Incgst Convert charge_value_uplift to numeric, handling NA values
 output_all_services_2$charge_value_uplift_numeric_incgst <- ifelse(is.na(output_all_services_2$charge_value_uplift) | is.na(output_all_services_2$base_charge_exgst),
-                                                 NA,
-                                                 as.numeric(sub("%", "", output_all_services_2$charge_value_uplift)))
+                                                                   NA,
+                                                                   as.numeric(sub("%", "", output_all_services_2$charge_value_uplift)))
 #exgst
 output_all_services_2$charge_value_uplift_numeric_exgst <- ifelse(is.na(output_all_services_2$charge_value_uplift) | is.na(output_all_services_2$base_charge_exgst),
-                                                            NA,
-                                                            as.numeric(sub("%", "", output_all_services_2$charge_value_uplift)))
+                                                                  NA,
+                                                                  as.numeric(sub("%", "", output_all_services_2$charge_value_uplift)))
 
 # Incgst Convert base_charge_exgst to numeric, handling NA values
 #exgst
 output_all_services_2$charge_value_max_exgst_numeric <- ifelse(is.na(output_all_services_2$charge_value_uplift) | is.na(output_all_services_2$base_charge_exgst),
-                                                                NA,
-                                                                as.numeric(gsub("[^0-9.]", "", output_all_services_2$base_charge_exgst)))
+                                                               NA,
+                                                               as.numeric(gsub("[^0-9.]", "", output_all_services_2$base_charge_exgst)))
 
 
 # Incgst Calculate the percentage of base_charge_exgst, handling NA values
 #exgst
 output_all_services_2$uplift_figure_exgst <- ifelse(is.na(output_all_services_2$charge_value_uplift_numeric_exgst) | is.na(output_all_services_2$charge_value_max_exgst_numeric),
-                                                     NA,
-                                                     (output_all_services_2$charge_value_uplift_numeric_exgst / 100) * output_all_services_2$charge_value_max_exgst_numeric)
+                                                    NA,
+                                                    (output_all_services_2$charge_value_uplift_numeric_exgst / 100) * output_all_services_2$charge_value_max_exgst_numeric)
 
 #  Incgst Filter out NA and non-numeric values before performing addition
 #exgst
 output_all_services_2$charge_to_custo_exgst <- ifelse(is.na(output_all_services_2$charge_value_max_exgst_numeric) | is.na(output_all_services_2$uplift_figure_exgst) | !is.numeric(output_all_services_2$charge_value_max_exgst_numeric) | !is.numeric(output_all_services_2$uplift_figure_exgst),
-                                                NA,
-                                                output_all_services_2$charge_value_max_exgst_numeric + output_all_services_2$uplift_figure_exgst)
+                                                      NA,
+                                                      output_all_services_2$charge_value_max_exgst_numeric + output_all_services_2$uplift_figure_exgst)
 
 
 # update table name
@@ -726,3 +749,6 @@ output_all_services_2 <- output_all_services_2
 ##### write to CSV ####
 
 write.csv(output_all_services_2, file = "output_all_services_2.csv")
+
+
+'2ES500191101000650807
