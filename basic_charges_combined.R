@@ -686,7 +686,7 @@ output_all_services_2$warnings <- ifelse(is.na(output_all_services_2$charge_valu
 # Condition 2: If service == 'International' and BILLED.WEIGHT == 0
 output_all_services_2$warnings <- ifelse(output_all_services_2$service == 'International' & 
                                            output_all_services_2$BILLED.WEIGHT == 0,
-                                         "declared weight used",
+                                         paste(output_all_services_2$warnings, "declared weight used"),
                                          output_all_services_2$warnings)
 
 # Condition 3: If service is not one of the specified values and cubic_weight == 0 & BILLED.WEIGHT == 0
@@ -696,19 +696,27 @@ output_all_services_2$warnings <- ifelse(!(output_all_services_2$service %in% c(
                                                                                 'reg_eparcel_returns')) & 
                                            output_all_services_2$cubic_weight == 0 & 
                                            output_all_services_2$BILLED.WEIGHT == 0,
-                                         "declared weight used",
+                                         paste(output_all_services_2$warnings, "declared weight used"),
                                          output_all_services_2$warnings)
 
 # Condition 4: If weight_category_max is NA or 0
 output_all_services_2$warnings <- ifelse(is.na(output_all_services_2$weight_category_max) | 
                                            output_all_services_2$weight_category_max == 0,
-                                         "no weight detected so 0 charge applied",
+                                         paste(output_all_services_2$warnings, "no weight detected so 0 charge applied"),
                                          output_all_services_2$warnings)
 
 # Condition 5: If weight_category_max is "Above_22kg_for_Wine"
 output_all_services_2$warnings <- ifelse(output_all_services_2$weight_category_max == "Above_22kg_for_Wine",
-                                         "over 22kg for wine",
+                                         paste(output_all_services_2$warnings, "over 22kg for wine"),
                                          output_all_services_2$warnings)
+
+# Condition 6: If CHARGE.ZONE is blank or NA
+output_all_services_2$warnings <- ifelse(is.na(output_all_services_2$CHARGE.ZONE) | 
+                                           output_all_services_2$CHARGE.ZONE == "",
+                                         paste(output_all_services_2$warnings, "no charge zone detected"),
+                                         output_all_services_2$warnings)
+
+
 
 
 
@@ -745,7 +753,7 @@ output_all_services_2$charge_to_custo_exgst <- ifelse(is.na(output_all_services_
 # update table name
 output_all_services_2 <- output_all_services_2
 
-#output_all_services_2 <- subset(output_all_services_2 , ARTICLE.ID %in% c('ET239232669AU'))
+#output_all_services_2 <- subset(output_all_services_2 , ARTICLE.ID %in% c('ET236199765AU'))
 ##### write to CSV ####
 
 write.csv(output_all_services_2, file = "output_all_services_2.csv")
