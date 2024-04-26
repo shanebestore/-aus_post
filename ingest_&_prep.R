@@ -55,7 +55,7 @@ bill_cut1 <-  bill_cut1[,  c("REGION", "RECEIVING.COUNTRY", "CUSTOMER", "NAME_1"
                             "BILLED.LENGTH", "BILLED.WIDTH", "BILLED.HEIGHT", "CUBIC.WEIGHT", "BILLED.WEIGHT", "ACTUAL.WEIGHT", "CHARGE.ZONE", "FROM.STATE", "AVG..UNIT.PRICE" , "AMOUNT.EXCL.TAX", "DECLARED.WEIGHT")] 
 
 # get the lift service as per uplift card. This covers all thats in the description
-bill_cut1$uplift_service <- ifelse(bill_cut1$REGION == "VIC" & bill_cut1$DESCRIPTION == "Parcel Post with Signature", "Regular.VIC",
+bill_cut1$service <- ifelse(bill_cut1$REGION == "VIC" & bill_cut1$DESCRIPTION == "Parcel Post with Signature", "Regular.VIC",
                                     ifelse(bill_cut1$REGION == "VIC" & bill_cut1$DESCRIPTION == "Express Post with Signature", "Express.VIC",
                                            ifelse(bill_cut1$REGION == "NSW" & bill_cut1$DESCRIPTION == "Parcel Post with Signature", "Regular.NSW",
                                                   ifelse(bill_cut1$REGION == "NSW" & bill_cut1$DESCRIPTION == "Express Post with Signature", "Express.NSW",
@@ -68,7 +68,34 @@ bill_cut1$uplift_service <- ifelse(bill_cut1$REGION == "VIC" & bill_cut1$DESCRIP
                                                                                                    ifelse(bill_cut1$REGION == "NSW" & bill_cut1$DESCRIPTION == "EPARCEL WINE STD", "Wine.NSW",
                                                                                                           ifelse(bill_cut1$DESCRIPTION == "PACK AND TRACK INTERNATIONAL", "International",
                                                                                                                  ifelse(bill_cut1$DESCRIPTION == "Express Courier International (eParcel)", "International",
-                                                         NA))))))))))))) 
+                                                         NA)))))))))))))
+
+bill_cut1$uplift <- ifelse(bill_cut1$DESCRIPTION == "Express Post Parcels (BYO up to 5kg)", "EPP_fivekg",
+                           ifelse(bill_cut1$DESCRIPTION %in% c("eParcel Return To Sender", "eParcel Post Return", "eParcel Call For Return"), 
+                                  ifelse(bill_cut1$REGION == "VIC", "Regular.VIC", 
+                                         ifelse(bill_cut1$REGION == "NSW", "Regular.NSW", NA)
+                                  ),
+                                  ifelse(bill_cut1$DESCRIPTION == "Express Post eparcel returns",
+                                         ifelse(bill_cut1$REGION == "VIC", "Express.VIC", 
+                                                ifelse(bill_cut1$REGION == "NSW", "Express.NSW", NA)
+                                         ),
+                                         ifelse(bill_cut1$DESCRIPTION == "EPARCEL WINE STD",
+                                                ifelse(bill_cut1$REGION == "VIC", "Wine.VIC",
+                                                       ifelse(bill_cut1$REGION == "NSW", "Wine.NSW", NA)
+                                                ),
+                                                ifelse(bill_cut1$DESCRIPTION %in% c("PACK AND TRACK INTERNATIONAL", "Express Courier International (eParcel)", "International Returns Express"), "International", 
+                                                       ifelse(bill_cut1$REGION == "VIC", 
+                                                              ifelse(bill_cut1$DESCRIPTION == "Parcel Post with Signature", "Regular.VIC",
+                                                                     ifelse(bill_cut1$DESCRIPTION == "Express Post with Signature", "Express.VIC", NA)),
+                                                              ifelse(bill_cut1$REGION == "NSW", 
+                                                                     ifelse(bill_cut1$DESCRIPTION == "Parcel Post with Signature", "Regular.NSW",
+                                                                            ifelse(bill_cut1$DESCRIPTION == "Express Post with Signature", "Express.NSW", NA)), NA
+                                                              )))))))
+       
+
+
+
+
 
 ##### customer code ####
 # Function to extract letters before the first "-"

@@ -13,7 +13,7 @@ names(bill)[names(bill) == "ARTICLE.ID"] <- "article_id"
 names(output_all_services_2)[names(output_all_services_2) == "ARTICLE.ID"] <- "article_id"
 
 # Specify columns to merge from output_all_services_2
-merge_cols <- c("customer_code", "uplift_service", "DESCRIPTION", "BILLING.DOC", "article_id", "base_charge_incgst", "base_charge_exgst", "base_charge_tax", "charge_value_uplift", "uplift_figure_exgst", "charge_to_custo_exgst", "cubic_weight", "max_weight", "CHARGE.ZONE", "fuel_surcharge", "fuel_gst", "sec_mng_chrg", "sec_mng_gst", "over_max_limits_fee", "weight_category_max", "warnings")
+merge_cols <- c("customer_code", "service", "uplift", "DESCRIPTION", "BILLING.DOC", "article_id", "base_charge_incgst", "base_charge_exgst", "base_charge_tax", "charge_value_uplift", "uplift_figure_exgst", "charge_to_custo_exgst", "cubic_weight", "max_weight", "CHARGE.ZONE", "fuel_surcharge", "fuel_gst", "sec_mng_chrg", "sec_mng_gst", "over_max_limits_fee", "weight_category_max", "warnings")
 
 # Select only the merge_cols from output_all_services_2
 selected_output_all_services_2 <- output_all_services_2[, merge_cols]
@@ -45,7 +45,7 @@ billed_weight_index <- which(names(final_output) == "BILLED.WEIGHT")
 
 # Insert new columns after "AVG..UNIT.PRICE"
 final_output <- cbind(final_output[, 1:billed_weight_index  ], 
-                      final_output[, c("cubic_weight", "max_weight", "weight_category_max", "uplift_service")],
+                      final_output[, c("cubic_weight", "max_weight", "weight_category_max", "service", "uplift")],
                       final_output[, (billed_weight_index  + 1):ncol(final_output)])
 
 

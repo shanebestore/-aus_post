@@ -22,7 +22,7 @@ bill_cut_a$cubic_weight <- cubic_size * factor
 over_max_limits_fee <-100
 #ex_pp_byo_up_to_5kg <-'Express Post Parcels (BYO up to 5kg)'
 bill_cut_a <- mutate(bill_cut_a, 
-                     max_weight = ifelse(uplift_service == 'International', 
+                     max_weight = ifelse(service == 'International', 
                                          ifelse(BILLED.WEIGHT == 0, DECLARED.WEIGHT, BILLED.WEIGHT),
                                          ifelse(cubic_weight == 0 & BILLED.WEIGHT == 0, 
                                                 DECLARED.WEIGHT, 
@@ -150,7 +150,7 @@ output_a <- cbind(bill_cut_a, weight_category_max)
 #### Base charge for Regular.VIC ####
 
 # cut the dataset down to correct uplift service
-output_a1 <- subset(output_a, uplift_service %in% c("Regular.VIC"))
+output_a1 <- subset(output_a, service %in% c("Regular.VIC"))
 
 #Determine the indexes to use to query the new base charge zone sheet 
 
@@ -198,7 +198,7 @@ output_a_2$base_charge_incgst <- mapply(calculate_final_charge, output_a_2$charg
 
 #### Base charge for Express.VIC ####
 
-output_b1 <- subset(output_a, uplift_service %in% c("Express.VIC"))
+output_b1 <- subset(output_a, service %in% c("Express.VIC"))
 
 #Determine the indexes to use to query the new base charge zone sheet 
 
@@ -247,7 +247,7 @@ output_b_2$base_charge_incgst <- mapply(calculate_final_charge, output_b_2$charg
 
 #### Base charge for Regular.NSW  ####
 
-output_c1 <- subset(output_a, uplift_service %in% c("Regular.NSW"))
+output_c1 <- subset(output_a, service %in% c("Regular.NSW"))
 
 #Determine the indexes to use to query the new base charge zone sheet 
 
@@ -296,7 +296,7 @@ output_c_2$base_charge_incgst <- mapply(calculate_final_charge, output_c_2$charg
 
 #### Base charge for Express.NSW ####
 
-output_d1 <- subset(output_a, uplift_service %in% c("Express.NSW"))
+output_d1 <- subset(output_a, service %in% c("Express.NSW"))
 
 #Determine the indexes to use to query the new base charge zone sheet 
 
@@ -344,16 +344,16 @@ output_d_2$base_charge_incgst <- mapply(calculate_final_charge, output_d_2$charg
 
 #### Base charge for Express Post Parcels (BYO up to 5kg) ####
 # to be tested when I can bring this in
-#output_e <- subset(output_a, uplift_service %in% c("EPP_fivekg"))
+#output_e <- subset(output_a, service %in% c("EPP_fivekg"))
 
 #output_e$base_charge_incgst <- ifelse(output_e$DESCRIPTION == "Express Post Parcels (BYO up to 5kg)",
 #                                                ex_pp_byo_up_to_5kg,
 #                                                NA)
 
 #### Base charge for eparcel return to sender, Express Post eparcel returns, eParcel Post Return (Reg)  ####
-# Function to subset data based on uplift_service and perform operations
-subset_and_operate <- function(data, service, fee) {
-  subset_data <- subset(data, uplift_service %in% service)
+# Function to subset data based on service and perform operations
+subset_and_operate <- function(data, services, fee) {
+  subset_data <- subset(data, service %in% services)
   if (nrow(subset_data) > 0) {
     subset_data$row_index_max <- NA
     subset_data$col_index_max <- NA
@@ -377,7 +377,7 @@ output_h <- subset_and_operate(output_a, c("reg_eparcel_returns", "reg_ep_call_f
 #### base charge for eparcel_wine.VIC ####
 
 # cut the dataset down to correct uplift service
-output_i1 <- subset(output_a, uplift_service %in% c("Wine.VIC"))
+output_i1 <- subset(output_a, service %in% c("Wine.VIC"))
 
 #Determine the indexes to use to query the new base charge zone sheet 
 
@@ -417,7 +417,7 @@ output_i_2$base_charge_incgst <- output_i_2$charge_value_max_incgst
 #### base charge for eparcel_wine.NSW #####
 
 # cut the dataset down to correct uplift service
-output_j1 <- subset(output_a, uplift_service %in% c("Wine.NSW"))
+output_j1 <- subset(output_a, service %in% c("Wine.NSW"))
 
 #Determine the indexes to use to query the new base charge zone sheet 
 
@@ -631,27 +631,21 @@ row_index_uplift <- numeric(nrow(output_all_services))
 
 # Iterate over each row
 for (i in 1:nrow(output_all_services)) {
-  if (output_all_services$DESCRIPTION[i] %in% c("Parcel Post with Signature", "Express Post with Signature", "EPARCEL WINE STD", "Express Courier International (eParcel)", 
-                                                "PACK AND TRACK INTERNATIONAL")) {
-    # For rows with specified DESCRIPTION, find column and row indices
-    col_name_uplift <- as.character(output_all_services$uplift_service[i])
-    col_index_uplift[i] <- which(colnames(customer_uplift_march_24) == col_name_uplift)
-    
-    row_name_uplift <- as.character(output_all_services$customer_code[i])
-    row_index <- which(rownames(customer_uplift_march_24) == row_name_uplift)
-    
-    # Check if the row index exists, otherwise assign NA
-    if (length(row_index) == 0) {
-      row_index_uplift[i] <- NA
-    } else {
-      row_index_uplift[i] <- row_index
-    }
-  } else {
-    # For other rows, assign NA to indices
-    col_index_uplift[i] <- NA
+  # For all rows, find column and row indices
+  col_name_uplift <- as.character(output_all_services$uplift[i])
+  col_index_uplift[i] <- which(colnames(customer_uplift_march_24) == col_name_uplift)
+  
+  row_name_uplift <- as.character(output_all_services$customer_code[i])
+  row_index <- which(rownames(customer_uplift_march_24) == row_name_uplift)
+  
+  # Check if the row index exists, otherwise assign NA
+  if (length(row_index) == 0) {
     row_index_uplift[i] <- NA
+  } else {
+    row_index_uplift[i] <- row_index
   }
 }
+
 
 
 
@@ -679,36 +673,42 @@ output_all_services_2$charge_value_uplift <- mapply(extract_charge_value_uplift,
 
 #### warning cols taken here
 # Col to highlight if we are missing weight information or custo has no uplift
-
 # Create a new column 'warnings' in output_all_services_2
 output_all_services_2$warnings <- NA
 
 # Condition 1: If charge_value_uplift is blank, NA, or 0
-output_all_services_2$warnings[is.na(output_all_services_2$charge_value_uplift) | 
-                                 output_all_services_2$charge_value_uplift == 0 |
-                                 output_all_services_2$charge_value_uplift == ""] <- "no uplift found"
+output_all_services_2$warnings <- ifelse(is.na(output_all_services_2$charge_value_uplift) | 
+                                           output_all_services_2$charge_value_uplift == 0 |
+                                           output_all_services_2$charge_value_uplift == "",
+                                         "no uplift found",
+                                         output_all_services_2$warnings)
 
-# Condition 2: If uplift_service == 'International' and BILLED.WEIGHT == 0
-output_all_services_2$warnings[output_all_services_2$uplift_service == 'International' & 
-                                 output_all_services_2$BILLED.WEIGHT == 0] <- "declared weight used"
+# Condition 2: If service == 'International' and BILLED.WEIGHT == 0
+output_all_services_2$warnings <- ifelse(output_all_services_2$service == 'International' & 
+                                           output_all_services_2$BILLED.WEIGHT == 0,
+                                         "declared weight used",
+                                         output_all_services_2$warnings)
 
-# Condition 3: If uplift_service is not one of the specified values and cubic_weight == 0 & BILLED.WEIGHT == 0
-output_all_services_2$warnings[!(output_all_services_2$uplift_service %in% c('International', 
-                                                                             'reg_ep_call_for_return', 
-                                                                             'ep_return_to_sender', 
-                                                                             'reg_eparcel_returns')) & 
-                                 output_all_services_2$cubic_weight == 0 & 
-                                 output_all_services_2$BILLED.WEIGHT == 0] <- "declared weight used"
-
-
+# Condition 3: If service is not one of the specified values and cubic_weight == 0 & BILLED.WEIGHT == 0
+output_all_services_2$warnings <- ifelse(!(output_all_services_2$service %in% c('International', 
+                                                                                'reg_ep_call_for_return', 
+                                                                                'ep_return_to_sender', 
+                                                                                'reg_eparcel_returns')) & 
+                                           output_all_services_2$cubic_weight == 0 & 
+                                           output_all_services_2$BILLED.WEIGHT == 0,
+                                         "declared weight used",
+                                         output_all_services_2$warnings)
 
 # Condition 4: If weight_category_max is NA or 0
-output_all_services_2$warnings[is.na(output_all_services_2$weight_category_max) | 
-                                 output_all_services_2$weight_category_max == 0] <- "no weight detected so 0 charge applied"
+output_all_services_2$warnings <- ifelse(is.na(output_all_services_2$weight_category_max) | 
+                                           output_all_services_2$weight_category_max == 0,
+                                         "no weight detected so 0 charge applied",
+                                         output_all_services_2$warnings)
 
 # Condition 5: If weight_category_max is "Above_22kg_for_Wine"
-output_all_services_2$warnings[output_all_services_2$weight_category_max == "Above_22kg_for_Wine"] <- "over 22kg for wine"
-
+output_all_services_2$warnings <- ifelse(output_all_services_2$weight_category_max == "Above_22kg_for_Wine",
+                                         "over 22kg for wine",
+                                         output_all_services_2$warnings)
 
 
 
@@ -750,5 +750,3 @@ output_all_services_2 <- output_all_services_2
 
 write.csv(output_all_services_2, file = "output_all_services_2.csv")
 
-
-'2ES500191101000650807
