@@ -1,25 +1,17 @@
-#### Basic Charges - Melbourne & eParcel Regular/Parcel post with signature #####
-# new calculation goes here
+#### All services are and charges are calculated in this script #####
 
-#### Ingesting Data and cutting down data set ####
+#### Ingesting Data ####
+# Changing name so  cleaniness purposes
 bill_cut_a <-  bill_cut1
 
-#### temp work zone here
-#bill_cut_a  <- subset(bill_cut_a , DESCRIPTION %in% c('PACK AND TRACK INTERNATIONAL'))
-#bill_cut_a  <- subset(bill_cut_a , ARTICLE.ID %in% c('CH148796820AU'))
-#bill_cut_a  <- subset(bill_cut_a , ARTICLE.ID %in% c('CH148357531AU'))
-#bill_cut_a  <- subset(bill_cut_a , ARTICLE.ID %in% c('ET240195739AU')) #p&t
-#bill_cut_a  <- subset(bill_cut_a , ARTICLE.ID %in% c('2ES500191101000650807'))
 
-
-#### Cubic factor ####
-# leaving this here as it might only relate to basic charges
+#### Cubic size ####
 
 factor <- 250  # Change this to your desired factor
 cubic_size <- bill_cut_a$BILLED.HEIGHT * bill_cut_a$BILLED.LENGTH * bill_cut_a$BILLED.WIDTH
 bill_cut_a$cubic_size <- cubic_size
 bill_cut_a$cubic_weight <- cubic_size * factor
-over_max_limits_fee <-100
+
 #ex_pp_byo_up_to_5kg <-'Express Post Parcels (BYO up to 5kg)'
 bill_cut_a <- mutate(bill_cut_a, 
                      max_weight = ifelse(service == 'International', 
@@ -27,7 +19,6 @@ bill_cut_a <- mutate(bill_cut_a,
                                          ifelse(cubic_weight == 0 & BILLED.WEIGHT == 0, 
                                                 DECLARED.WEIGHT, 
                                                 pmax(cubic_weight, BILLED.WEIGHT))))
-
 
 
 #### Declare the charges ####
@@ -38,6 +29,7 @@ sec_mng_chrg_pct <- 0.0435
 ep_return_to_sender_fee <- 12.85 #same for both express and standard
 exp_eparcel_returns_fee <- 28.45 
 reg_eparcel_returns_fee <- 12.43
+over_max_limits_fee <-100
 
 #### over max limites fee
 bill_cut_a$over_max_limits_fee <- ifelse(bill_cut_a$ACTUAL.WEIGHT > 22 | bill_cut_a$BILLED.LENGTH > 105 | bill_cut_a$cubic_size > 0.25, 100, NA)
@@ -170,7 +162,6 @@ row_index_max <- unlist(lapply(row_name_max, function(row_name_max) {
   }
 }))
 
-
 output_a_2 <-cbind(output_a1, (cbind(row_index_max, col_index_max)))
 
 # query new base charge rate 
@@ -182,7 +173,6 @@ extract_charge_value_max_incgst <- function(row_index_max, col_index_max) {
 }
 
 output_a_2$charge_value_max_incgst <- mapply(extract_charge_value_max_incgst, output_a_2$row_index_max, output_a_2$col_index_max)
-
 
 # Function to calculate charge based on charge_value_max and Per_Kg_#. Also does the calc if  weight_category_max == "Basic"
 calculate_final_charge <- function(charge_value_max_incgst , weight_category_max, max_weight, row_index_max) {
@@ -218,7 +208,6 @@ row_index_max <- unlist(lapply(row_name_max, function(row_name_max) {
   }
 }))
 
-
 output_b_2 <-cbind(output_b1, (cbind(row_index_max, col_index_max)))
 
 # query new base charge rate 
@@ -231,7 +220,6 @@ extract_charge_value_max_incgst <- function(row_index_max, col_index_max) {
 
 output_b_2$charge_value_max_incgst <- mapply(extract_charge_value_max_incgst, output_b_2$row_index_max, output_b_2$col_index_max)
 
-
 # Function to calculate charge based on charge_value_max_incgst and Per_Kg_#. Also does the calc if  weight_category_max == "Basic"
 calculate_final_charge <- function(charge_value_max_incgst, weight_category_max, max_weight, row_index_max) {
   if (weight_category_max == "Basic") {
@@ -243,7 +231,6 @@ calculate_final_charge <- function(charge_value_max_incgst, weight_category_max,
 }
 
 output_b_2$base_charge_incgst <- mapply(calculate_final_charge, output_b_2$charge_value_max_incgst, output_b_2$weight_category_max, output_b_2$max_weight, output_b_2$row_index_max)
-
 
 #### Base charge for Regular.NSW  ####
 
@@ -267,7 +254,6 @@ row_index_max <- unlist(lapply(row_name_max, function(row_name_max) {
   }
 }))
 
-
 output_c_2 <-cbind(output_c1, (cbind(row_index_max, col_index_max)))
 
 # query new base charge rate 
@@ -279,7 +265,6 @@ extract_charge_value_max_incgst <- function(row_index_max, col_index_max) {
 }
 
 output_c_2$charge_value_max_incgst <- mapply(extract_charge_value_max_incgst, output_c_2$row_index_max, output_c_2$col_index_max)
-
 
 # Function to calculate charge based on charge_value_max_incgst and Per_Kg_#. Also does the calc if  weight_category_max == "Basic"
 calculate_final_charge <- function(charge_value_max_incgst, weight_category_max, max_weight, row_index_max) {
@@ -293,9 +278,7 @@ calculate_final_charge <- function(charge_value_max_incgst, weight_category_max,
 
 output_c_2$base_charge_incgst <- mapply(calculate_final_charge, output_c_2$charge_value_max_incgst, output_c_2$weight_category_max, output_c_2$max_weight, output_c_2$row_index_max)
 
-
 #### Base charge for Express.NSW ####
-
 output_d1 <- subset(output_a, service %in% c("Express.NSW"))
 
 #Determine the indexes to use to query the new base charge zone sheet 
@@ -316,7 +299,6 @@ row_index_max <- unlist(lapply(row_name_max, function(row_name_max) {
   }
 }))
 
-
 output_d_2 <-cbind(output_d1, (cbind(row_index_max, col_index_max)))
 
 # query new base charge rate 
@@ -328,7 +310,6 @@ extract_charge_value_max_incgst <- function(row_index_max, col_index_max) {
 }
 
 output_d_2$charge_value_max_incgst <- mapply(extract_charge_value_max_incgst, output_d_2$row_index_max, output_d_2$col_index_max)
-
 
 # Function to calculate charge based on charge_value_max_incgst and Per_Kg_#. Also does the calc if  weight_category_max == "Basic"
 calculate_final_charge <- function(charge_value_max_incgst, weight_category_max, max_weight, row_index_max) {
@@ -397,9 +378,7 @@ row_index_max <- unlist(lapply(row_name_max, function(row_name_max) {
   }
 }))
 
-
 output_i_2 <-cbind(output_i1, (cbind(row_index_max, col_index_max)))
-
 
 # query new base charge rate 
 # Function to extract values from charge zone dataset based on indices
@@ -412,7 +391,6 @@ extract_charge_value_max_incgst <- function(row_index_max, col_index_max) {
 output_i_2$charge_value_max_incgst <- mapply(extract_charge_value_max_incgst, output_i_2$row_index_max, output_i_2$col_index_max)
 
 output_i_2$base_charge_incgst <- output_i_2$charge_value_max_incgst
-
 
 #### base charge for eparcel_wine.NSW #####
 
@@ -454,7 +432,6 @@ output_j_2$charge_value_max_incgst <- mapply(extract_charge_value_max_incgst, ou
 output_j_2$base_charge_incgst <- output_j_2$charge_value_max_incgst
 
 #### Base charge for PACK AND TRACK INTERNATIONAL ####
-# have to return to international as a whole to give us the logic to determine the correct per KG multiplication
 
 # using the description here
 output_l1 <- subset(output_a, DESCRIPTION  %in% c("PACK AND TRACK INTERNATIONAL"))
@@ -478,8 +455,6 @@ row_index_max <- unlist(lapply(row_name_max, function(row_name_max) {
   }
 }))
 
-
-
 output_l_2 <-cbind(output_l1, (cbind(row_index_max, col_index_max)))
 sapply(output_l_2, class)
 
@@ -491,10 +466,9 @@ extract_charge_value_max_incgst <- function(row_index_max, col_index_max) {
   return(as.numeric(charge_value))
 }
 
-
 output_l_2$charge_value_max_incgst <- mapply(extract_charge_value_max_incgst, output_l_2$row_index_max, output_l_2$col_index_max)
 
-sapply(output_l_2, class)
+#sapply(output_l_2, class)
 
 # Function to calculate charge based on charge_value_max_incgst and Per_Kg_#. Also does the calc if  weight_category_max == "X2.01kg_to_20kg"
 #calculate_final_charge <- function(charge_value_max_incgst, weight_category_max, max_weight, row_index_max) {
@@ -505,7 +479,6 @@ sapply(output_l_2, class)
 #    return(charge_value_max_incgst)  
 #  }
 #}
-
 
 calculate_final_charge <- function(charge_value_max_incgst, weight_category_max, max_weight, row_index_max) {
   
@@ -529,8 +502,6 @@ calculate_final_charge <- function(charge_value_max_incgst, weight_category_max,
 output_l_2$base_charge_incgst <- mapply(calculate_final_charge, output_l_2$charge_value_max_incgst, output_l_2$weight_category_max, output_l_2$max_weight, output_l_2$row_index_max)
 sapply(output_l_2, class)
 
-
-
 #### Base charge fo Express Courier International (eParcel) ####
 # using the description here
 output_k1 <- subset(output_a, DESCRIPTION  %in% c("Express Courier International (eParcel)"))
@@ -553,7 +524,6 @@ row_index_max <- unlist(lapply(row_name_max, function(row_name_max) {
   }
 }))
 
-
 output_k_2 <-cbind(output_k1, (cbind(row_index_max, col_index_max)))
 sapply(output_k_2, class)
 
@@ -567,7 +537,6 @@ extract_charge_value_max_incgst <- function(row_index_max, col_index_max) {
 
 output_k_2$charge_value_max_incgst <- mapply(extract_charge_value_max_incgst, output_k_2$row_index_max, output_k_2$col_index_max)
 
-
 # Function to calculate charge based on charge_value_max_incgst and Per_Kg_#. Also does the calc if  weight_category_max == "X2.01kg_to_20kg"
 calculate_final_charge <- function(charge_value_max_incgst, weight_category_max, max_weight, row_index_max) {
   if (weight_category_max == "X2.01kg_to_20kg") {
@@ -579,11 +548,6 @@ calculate_final_charge <- function(charge_value_max_incgst, weight_category_max,
 }
 
 output_k_2$base_charge_incgst <- mapply(calculate_final_charge, output_k_2$charge_value_max_incgst, output_k_2$weight_category_max, output_k_2$max_weight, output_k_2$row_index_max)
-
-
-write.csv(output_k_2, file = "output_k_2.csv")
-
-
 
 #### combine all DFs together ######
 output_all_services  <- rbind(output_a_2, output_b_2, output_c_2, output_d_2, output_f, output_g, output_h, output_i_2, output_j_2, output_l_2, output_k_2)
@@ -605,10 +569,22 @@ output_all_services  <- rbind(output_a_2, output_b_2, output_c_2, output_d_2, ou
 output_all_services$base_charge_exgst <- ifelse(output_all_services$is_gst_free_zone == 'No', 
                                                 (output_all_services$base_charge_incgst/ 110) * 100, 
                                                 output_all_services$base_charge_incgst)
-write.csv(output_all_services, file = "output_all_services.csv")
+# check if there is a difference
+discrepancy <- function(output_all_services) {
+  # Check if the rounded value of AMOUNT.EXCL.TAX is equal to base_charge_exgst
+  output_all_services$discrepancy <- ifelse(
+    round(output_all_services$AMOUNT.EXCL.TAX, 2) == round(output_all_services$base_charge_exgst, 2),
+    "no",
+    "yes"
+  )
+  
+  return(output_all_services)
+}
+output_all_services <- discrepancy(output_all_services)
 
 # find the tax amount
 output_all_services$base_charge_tax <- output_all_services$base_charge_incgst - output_all_services$base_charge_exgst 
+
 
 # calculate fuel surcharge based on ex gst
 output_all_services$fuel_surcharge <- output_all_services$base_charge_exgst * fuel_surcharge_pct
@@ -620,6 +596,8 @@ output_all_services$sec_mng_chrg <- ifelse(output_all_services$DESCRIPTION == "E
                                            output_all_services$base_charge_exgst * sec_mng_chrg_pct,
                                            NA)
 output_all_services$sec_mng_gst <- output_all_services$sec_mng_chrg * gst
+
+
 
 
 ##### multiply by customer uplift   ####
@@ -635,7 +613,7 @@ for (i in 1:nrow(output_all_services)) {
   col_name_uplift <- as.character(output_all_services$uplift[i])
   col_index_uplift[i] <- which(colnames(customer_uplift_march_24) == col_name_uplift)
   
-  row_name_uplift <- as.character(output_all_services$customer_code[i])
+  row_name_uplift <- as.character(output_all_services$customer_code2[i])
   row_index <- which(rownames(customer_uplift_march_24) == row_name_uplift)
   
   # Check if the row index exists, otherwise assign NA
@@ -645,10 +623,6 @@ for (i in 1:nrow(output_all_services)) {
     row_index_uplift[i] <- row_index
   }
 }
-
-
-
-
 
 output_all_services_2 <-cbind(output_all_services, (cbind(row_index_uplift, col_index_uplift)))
 
@@ -668,7 +642,6 @@ extract_charge_value_uplift <- function(row_index_uplift, col_index_uplift) {
   }
 }
 
-
 output_all_services_2$charge_value_uplift <- mapply(extract_charge_value_uplift, output_all_services_2$row_index_uplift, output_all_services_2$col_index_uplift)
 
 #### warning cols taken here
@@ -680,13 +653,13 @@ output_all_services_2$warnings <- NA
 output_all_services_2$warnings <- ifelse(is.na(output_all_services_2$charge_value_uplift) | 
                                            output_all_services_2$charge_value_uplift == 0 |
                                            output_all_services_2$charge_value_uplift == "",
-                                         "no uplift found",
+                                         "No uplift found. ",
                                          output_all_services_2$warnings)
 
 # Condition 2: If service == 'International' and BILLED.WEIGHT == 0
 output_all_services_2$warnings <- ifelse(output_all_services_2$service == 'International' & 
                                            output_all_services_2$BILLED.WEIGHT == 0,
-                                         paste(output_all_services_2$warnings, "declared weight used"),
+                                         paste(output_all_services_2$warnings, "Declared weight used. "),
                                          output_all_services_2$warnings)
 
 # Condition 3: If service is not one of the specified values and cubic_weight == 0 & BILLED.WEIGHT == 0
@@ -696,7 +669,7 @@ output_all_services_2$warnings <- ifelse(!(output_all_services_2$service %in% c(
                                                                                 'reg_eparcel_returns')) & 
                                            output_all_services_2$cubic_weight == 0 & 
                                            output_all_services_2$BILLED.WEIGHT == 0,
-                                         paste(output_all_services_2$warnings, "declared weight used"),
+                                         paste(output_all_services_2$warnings, "Declared weight used. "),
                                          output_all_services_2$warnings)
 
 # Condition 4: If weight_category_max is NA or 0
@@ -707,18 +680,19 @@ output_all_services_2$warnings <- ifelse(is.na(output_all_services_2$weight_cate
 
 # Condition 5: If weight_category_max is "Above_22kg_for_Wine"
 output_all_services_2$warnings <- ifelse(output_all_services_2$weight_category_max == "Above_22kg_for_Wine",
-                                         paste(output_all_services_2$warnings, "over 22kg for wine"),
+                                         paste(output_all_services_2$warnings, "Over 22kg for wine. "),
                                          output_all_services_2$warnings)
 
 # Condition 6: If CHARGE.ZONE is blank or NA
 output_all_services_2$warnings <- ifelse(is.na(output_all_services_2$CHARGE.ZONE) | 
                                            output_all_services_2$CHARGE.ZONE == "",
-                                         paste(output_all_services_2$warnings, "no charge zone detected"),
+                                         paste(output_all_services_2$warnings, "No charge zone detected. "),
                                          output_all_services_2$warnings)
 
-
-
-
+#output_all_services_2$warnings <- ifelse(is.na(output_all_services_2$corresponding_value) | 
+#                                           output_all_services_2$corresponding_value == "custo code not found",
+#                                         "custo code not found",
+#                                         output_all_services_2$warnings)
 
 #### multiply base by uplift ####
 # Incgst Convert charge_value_uplift to numeric, handling NA values
@@ -736,7 +710,6 @@ output_all_services_2$charge_value_max_exgst_numeric <- ifelse(is.na(output_all_
                                                                NA,
                                                                as.numeric(gsub("[^0-9.]", "", output_all_services_2$base_charge_exgst)))
 
-
 # Incgst Calculate the percentage of base_charge_exgst, handling NA values
 #exgst
 output_all_services_2$uplift_figure_exgst <- ifelse(is.na(output_all_services_2$charge_value_uplift_numeric_exgst) | is.na(output_all_services_2$charge_value_max_exgst_numeric),
@@ -748,7 +721,6 @@ output_all_services_2$uplift_figure_exgst <- ifelse(is.na(output_all_services_2$
 output_all_services_2$charge_to_custo_exgst <- ifelse(is.na(output_all_services_2$charge_value_max_exgst_numeric) | is.na(output_all_services_2$uplift_figure_exgst) | !is.numeric(output_all_services_2$charge_value_max_exgst_numeric) | !is.numeric(output_all_services_2$uplift_figure_exgst),
                                                       NA,
                                                       output_all_services_2$charge_value_max_exgst_numeric + output_all_services_2$uplift_figure_exgst)
-
 
 # update table name
 output_all_services_2 <- output_all_services_2

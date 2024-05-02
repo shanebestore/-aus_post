@@ -1,57 +1,81 @@
-# combine the 4 parts together
-#output_a_3_combined  <- rbind(output_a_3_reg_VIC, output_b_3_express_VIC, output_c_3_reg_NSW,  output_d_3_express_NSW)
-#basic_charges_post_feb<- output_a_3_combined [order(output_a_3_combined$BILLING.DOC), ]
-#write.csv(basic_charges_post_feb, file = "basic_charges_post_feb.csv")
-# merging the original input file and the post feb basic charges
-
-#the above is redundent
-#Take what we want from the DF and put it into the input file
-# Rename column in bill data frame
+#### join the columns onto the billing doc in the correct places ####
+# rename the article_id
 names(bill)[names(bill) == "ARTICLE.ID"] <- "article_id"
-
-# Rename column in output_all_services_2 data frame
 names(output_all_services_2)[names(output_all_services_2) == "ARTICLE.ID"] <- "article_id"
 
 # Specify columns to merge from output_all_services_2
-merge_cols <- c("customer_code", "service", "uplift", "DESCRIPTION", "BILLING.DOC", "article_id", "base_charge_incgst", "base_charge_exgst", "base_charge_tax", "charge_value_uplift", "uplift_figure_exgst", "charge_to_custo_exgst", "cubic_weight", "max_weight", "CHARGE.ZONE", "fuel_surcharge", "fuel_gst", "sec_mng_chrg", "sec_mng_gst", "over_max_limits_fee", "weight_category_max", "warnings")
+merge_cols <- c("customer_code2", "customer_code", "service", "uplift", "DESCRIPTION", "BILLING.DOC", "article_id", 
+                "base_charge_incgst", "base_charge_exgst", "base_charge_tax", "charge_value_uplift", "uplift_figure_exgst", 
+                "charge_to_custo_exgst", "cubic_weight", "max_weight", "fuel_surcharge", "fuel_gst", "sec_mng_chrg", "sec_mng_gst", 
+                "over_max_limits_fee", "weight_category_max", "warnings")
 
 # Select only the merge_cols from output_all_services_2
 selected_output_all_services_2 <- output_all_services_2[, merge_cols]
 
-# Merge bill and selected columns from output_all_services_2 by "article_id"
-final_output <- merge(bill, selected_output_all_services_2, by = c("article_id", "BILLING.DOC", "DESCRIPTION"), all = TRUE)
-
-
-# Find the position of "AVG..UNIT.PRICE" column
-avg_unit_price_index <- which(names(final_output) == "AMOUNT.INCL.TAX")
-
-# Insert new columns after "AVG..UNIT.PRICE"
-final_output <- cbind(final_output[, 1:avg_unit_price_index],
-                      final_output[, c("base_charge_incgst","base_charge_exgst", "base_charge_tax", "charge_value_uplift", "uplift_figure_exgst", "charge_to_custo_exgst", "warnings")],
-                      final_output[, (avg_unit_price_index + 1):ncol(final_output)])
-
+# Merge bill and selected columns from output_all_services_2 by the unique identifier 
+billing_doc_output <- merge(bill, selected_output_all_services_2, by = c("article_id", "BILLING.DOC", "DESCRIPTION"), all = TRUE)
 
 # Find the position of "AVG..UNIT.PRICE" column
-fuel_gst_index <- which(names(final_output) == "FUEL.GST")
+avg_unit_price_index <- which(names(billing_doc_output ) == "AMOUNT.INCL.TAX")
 
 # Insert new columns after "AVG..UNIT.PRICE"
-final_output <- cbind(final_output[, 1:fuel_gst_index  ],
-                      final_output[, c("fuel_surcharge" ,"fuel_gst", "sec_mng_chrg", "sec_mng_gst", "over_max_limits_fee")],
-                      final_output[, (fuel_gst_index  + 1):ncol(final_output)])
+billing_doc_output  <- cbind(billing_doc_output [, 1:avg_unit_price_index],
+                      billing_doc_output [, c("base_charge_incgst","base_charge_exgst", "base_charge_tax", "charge_value_uplift", "uplift_figure_exgst", "charge_to_custo_exgst", "warnings")],
+                      billing_doc_output [, (avg_unit_price_index + 1):ncol(billing_doc_output )])
 
 
-# Find the position of "AVG..UNIT.PRICE" column
-billed_weight_index <- which(names(final_output) == "BILLED.WEIGHT")
+# Find the position of "FUEL.GST" column
+fuel_gst_index <- which(names(billing_doc_output ) == "FUEL.GST")
 
-# Insert new columns after "AVG..UNIT.PRICE"
-final_output <- cbind(final_output[, 1:billed_weight_index  ], 
-                      final_output[, c("cubic_weight", "max_weight", "weight_category_max", "service", "uplift")],
-                      final_output[, (billed_weight_index  + 1):ncol(final_output)])
+# Insert new columns after "FUEL.GST"
+billing_doc_output  <- cbind(billing_doc_output [, 1:fuel_gst_index  ],
+                      billing_doc_output [, c("fuel_surcharge" ,"fuel_gst", "sec_mng_chrg", "sec_mng_gst", "over_max_limits_fee")],
+                      billing_doc_output [, (fuel_gst_index  + 1):ncol(billing_doc_output )])
 
 
-#final_output  <- subset(final_output , NAME_1 %in% c('LVO - Luvo Store - ESK'))
-# Write final_output to a CSV file
-write.csv(final_output, file = "final_output.csv")
+# Find the position of "BILLED.WEIGHT" column
+billed_weight_index <- which(names(billing_doc_output ) == "BILLED.WEIGHT")
+
+# Insert new columns after "BILLED.WEIGHT"
+billing_doc_output  <- cbind(billing_doc_output [, 1:billed_weight_index  ], 
+                      billing_doc_output [, c("cubic_weight", "max_weight", "weight_category_max", "service", "uplift")],
+                      billing_doc_output [, (billed_weight_index  + 1):ncol(billing_doc_output )])
+
+
+write.csv(billing_doc_output , file = "billing_doc_output .csv")
+
+#create international_charge_zone here for the time being at least
+billing_doc_output$intl_charge_zone <- billing_doc_output$CHARGE.ZONE
+
+
+
+##### final_output_v2 ####
+
+# Produce the output for in the right structure for the output file. This will also be the basis for the aggregation and calculation files so the ends will have to come off
+#
+desired_order <- c(
+  "customer_code", "NAME_1", "MAILING.STATEMENT.NO.", "ASSIGNMENT.NO." , "SERVICE.DATE" , "DESCRIPTION",
+  "BILLING.DATE", "CONSIGNMENT.ID", "article_id", "LODGEMENT.DATE", "ACTUAL.WEIGHT", "ACTUAL.UNIT", "ACTUAL.LENGTH",
+  "ACTUAL.WIDTH", "ACTUAL.HEIGHT", "ACTUAL.UNIT.TYPE", "DECLARED.WEIGHT", "DECLARED.WEIGHT",	"DECLARED.UNIT",	"DECLARED.LENGTH", 
+  "DECLARED.WIDTH"	, "DECLARED.HEIGHT",	"DECLARED.UNIT.TYPE", "DECLARED.WEIGHT",	"DECLARED.UNIT",	"DECLARED.LENGTH",	"DECLARED.WIDTH",
+  "DECLARED.HEIGHT",	"DECLARED.UNIT.TYPE", "FROM.NAME", 	"FROM.ADDRESS",	"FROM.CITY",	"FROM.STATE",	"FROM.POSTAL.CODE",
+ "TO.NAME",	"TO.ADDRESS",	"TO.CITY",	"TO.STATE",	"TO.POSTAL.CODE", "CUST.REF.1",	"CUST.REF.2",	"BILLED.LENGTH", "BILLED.WIDTH",
+ "BILLED.HEIGHT", "CUBIC.WEIGHT", "BILLED.WEIGHT", "CHARGE.CODE", "RECEIVING.COUNTRY", "intl_charge_zone", "CHARGE.ZONE", "service", "QTY", "AMOUNT.INCL.TAX", 
+ "AMOUNT.EXCL.TAX", "base_charge_incgst", "base_charge_exgst", "uplift_figure_exgst", "charge_to_custo_exgst", "fuel_surcharge", "FUEL.SURCHARGE..", 
+ "SMC.FEE", "sec_mng_chrg", "over_max_limits_fee"
+)
+# Reorder the columns in final_output
+ap_post_supply <- billing_doc_output [, desired_order]
+
+write.csv(ap_post_supply , file = "ap_post_supply.csv")
+
+
+
+
+
+
+###########
+
 
 # Get the current date
 #current_date <- Sys.Date()
@@ -63,10 +87,10 @@ write.csv(final_output, file = "final_output.csv")
 #output_file <- "output.csv"
 
 # Append the date at the end of the file name
-#final_output_with_date <- paste0(gsub(".csv", "", output_file), "_", formatted_date, ".csv")
+#final_output_v1_with_date <- paste0(gsub(".csv", "", output_file), "_", formatted_date, ".csv")
 
 # Write your data to the CSV file with the generated file name
-#write.csv(final_output, file = final_output_with_date)
+#write.csv(final_output_v1, file = final_output_v1_with_date)
 
 
 

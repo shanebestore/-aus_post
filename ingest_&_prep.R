@@ -13,13 +13,13 @@ library(plyr)
 library(dplyr)
 
 
-##### Bring in the required datasets #####
+##### Bring in the billng doc #####
 
 #bill = read.csv("ESTORELOGISTICSPTYLTD_0006794750_20240303_1013048181.csv", head=TRUE, sep=",")
 #bill = read.csv("ESTORELOGISTICSPTYLTD_0006794750_20240219_1013016084.csv", head=TRUE, sep=",")
 #bill = read.csv("1013111472-5890569129689088.csv", head=TRUE, sep=",")
 #1013156007-5729374082957312
-bill = read.csv("1013156007-5729374082957312.csv", head=TRUE, sep=",")
+bill = read.csv("1013111472-5890569129689088.csv", head=TRUE, sep=",")
 
 # pre feb base rates. Left in for pulling comparison calcs
 #cz_pre_feb_eparcel_regular_ex_mel = read.csv("cz_pre_feb_eparcel_regular_ex_mel.csv", head=TRUE, row.names = 1,  sep=",")
@@ -42,7 +42,8 @@ cz_post_feb_eparcel_international_standard = read.csv("cz_post_feb_eparcel_inter
 
 # custo mark up
 customer_uplift_march_24 = read.csv("customer_uplift_march_24.csv", head=TRUE, row.names = 1,  sep=",")
-
+#custo codes
+estore_custo_codes = read.csv("estore_custo_codes.csv", head=TRUE, sep=",")
 
 #colnames(cz_melb_espress) <- sub("^X", "", colnames(cz_melb_espress))
 
@@ -94,17 +95,46 @@ bill_cut1$uplift <- ifelse(bill_cut1$DESCRIPTION == "Express Post Parcels (BYO u
        
 
 
-
-
-
-##### customer code ####
+#### customer code ####
 # Function to extract letters before the first "-"
 extract_letters <- function(text) {
-  split_text <- strsplit(as.character(text), "-")[[1]]
+  split_text <- strsplit(as.character(text), " ")[[1]]
   return(trimws(split_text[1]))  
 }
-bill_cut1$customer_code <- sapply(bill_cut1$NAME_1, extract_letters)
-### create a col to determine if its GST free
+
+# Create a new column in bill_cut1 to store the corresponding values from DF2
+bill_cut1$customer_code <- NA
+
+# Loop through each row in bill_cut1
+for (i in 1:nrow(bill_cut1)) {
+  # Get the trading name from bill_cut1$NAME_1
+  trading_name <- bill_cut1$NAME_1[i]
+  
+  # Find the corresponding row index in DF2 where trading_name matches
+  match_index <- which(estore_custo_codes$trading_name == trading_name)
+  
+  # If a match is found, assign the corresponding value from DF2 to bill_cut1
+  if (length(match_index) > 0) {
+    bill_cut1$customer_code[i] <- estore_custo_codes$eStore_code[match_index]
+  } else {
+    # Handle cases where no match is found
+    # Extract letters before the "-" in bill_cut1$NAME_1
+    letters_before_dash <- substr(trading_name, 1, regexpr("-", trading_name) - 1)
+    bill_cut1$customer_code[i] <- ifelse(letters_before_dash != "", letters_before_dash, "custo code not found")
+  }
+}
+
+# Apply the extract_letters function to customer_code where necessary
+bill_cut1$customer_code2 <- sapply(bill_cut1$customer_code, function(code) {
+  if (code == "custo code not found") {
+    extract_letters(bill_cut1$NAME_1[i])
+  } else {
+    extract_letters(code)
+  }
+})
+
+
+#### create a col to determine if its GST free ####
 
 # Define a function to apply the logic
 is_gst_free <- function(zone) {
