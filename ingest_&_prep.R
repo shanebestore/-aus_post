@@ -1,15 +1,15 @@
 ##### Prep work #####
 # bring in the required packages
 #install.packages("qpcR")
-library(qpcR)
+#library(qpcR)
 
 #install.packages("tidyr")
-library(tidyr)
+#library(tidyr)
 
 #install.packages("plyr")
-library(plyr)
+#library(plyr)
 
-#install.packages("dplyr")
+install.packages("dplyr")
 library(dplyr)
 
 
@@ -17,9 +17,14 @@ library(dplyr)
 
 #bill = read.csv("ESTORELOGISTICSPTYLTD_0006794750_20240303_1013048181.csv", head=TRUE, sep=",")
 #bill = read.csv("ESTORELOGISTICSPTYLTD_0006794750_20240219_1013016084.csv", head=TRUE, sep=",")
-#bill = read.csv("1013111472-5890569129689088.csv", head=TRUE, sep=",")
+
 #1013156007-5729374082957312
-bill = read.csv("1013111472-5890569129689088.csv", head=TRUE, sep=",")
+#bill = read.csv("1013156007-5729374082957312.csv", head=TRUE, sep=",")
+#bill = read.csv("ESTORELOGISTICSPTYLTD_0006794750_20240219_1013016084.csv", head=TRUE, sep=",") #01-16 feb
+#bill = read.csv("ESTORELOGISTICSPTYLTD_0006794750_20240303_1013048181.csv", head=TRUE, sep=",") # 17-28 feb
+#bill = read.csv("ESTORELOGISTICSPTYLTD_0006794750_20240319_1013085979.csv", head=TRUE, sep=",") # 01 - 16 Mar
+bill = read.csv("1013111472-5890569129689088.csv", head=TRUE, sep=",")                          # 17 - 31 Mar
+
 
 # pre feb base rates. Left in for pulling comparison calcs
 #cz_pre_feb_eparcel_regular_ex_mel = read.csv("cz_pre_feb_eparcel_regular_ex_mel.csv", head=TRUE, row.names = 1,  sep=",")

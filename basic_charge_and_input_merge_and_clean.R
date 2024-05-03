@@ -42,7 +42,27 @@ billing_doc_output  <- cbind(billing_doc_output [, 1:billed_weight_index  ],
                       billing_doc_output [, (billed_weight_index  + 1):ncol(billing_doc_output )])
 
 
-write.csv(billing_doc_output , file = "billing_doc_output .csv")
+
+
+
+#Quick descrepancy check
+
+#discrepancy <- function(billing_doc_output) {
+# Check if the rounded value of AMOUNT.EXCL.TAX is equal to base_charge_exgst
+#  billing_doc_output$discrepancy <- ifelse(
+ #  round(billing_doc_output$AMOUNT.INCL.TAX, 2) == round(billing_doc_output$base_charge_incgst, 2),
+#   "no",
+#   "yes"
+#  )
+
+#  return(billing_doc_output)
+#}
+#billing_doc_output <- discrepancy(billing_doc_output)
+
+
+file_name <- paste0("billing_doc_output_", predefined_text, ".csv")
+
+write.csv(billing_doc_output , file = file_name)
 
 #create international_charge_zone here for the time being at least
 billing_doc_output$intl_charge_zone <- billing_doc_output$CHARGE.ZONE
@@ -62,12 +82,24 @@ desired_order <- c(
  "TO.NAME",	"TO.ADDRESS",	"TO.CITY",	"TO.STATE",	"TO.POSTAL.CODE", "CUST.REF.1",	"CUST.REF.2",	"BILLED.LENGTH", "BILLED.WIDTH",
  "BILLED.HEIGHT", "CUBIC.WEIGHT", "BILLED.WEIGHT", "CHARGE.CODE", "RECEIVING.COUNTRY", "intl_charge_zone", "CHARGE.ZONE", "service", "QTY", "AMOUNT.INCL.TAX", 
  "AMOUNT.EXCL.TAX", "base_charge_incgst", "base_charge_exgst", "uplift_figure_exgst", "charge_to_custo_exgst", "fuel_surcharge", "FUEL.SURCHARGE..", 
- "SMC.FEE", "sec_mng_chrg", "over_max_limits_fee"
+ "SMC.FEE", "sec_mng_chrg", "over_max_limits_fee", "BILLING.DOC"#, "OVER.MAX.LIMITS.FEE"
 )
 # Reorder the columns in final_output
 ap_post_supply <- billing_doc_output [, desired_order]
 
-write.csv(ap_post_supply , file = "ap_post_supply.csv")
+ap_post_supply <- ap_post_supply %>%
+  group_by(BILLING.DOC) %>%
+  mutate(base_charge_incgst = ifelse(DESCRIPTION == "AP Parcels Domestic Fuel Surcharge", 
+                                     base_charge_incgst + sum(fuel_surcharge), 
+                                     base_charge_incgst)) %>%
+  ungroup()
+
+
+
+file_name <- paste0("ap_post_supply_", predefined_text, ".csv")
+
+write.csv(ap_post_supply, file = file_name)
+
 
 
 

@@ -24,12 +24,13 @@ bill_cut_a <- mutate(bill_cut_a,
 #### Declare the charges ####
 #fuel charge_ex_gst has to be calculated from the exgst charge value
 gst <- 0.1
-fuel_surcharge_pct <- 0.077
+fuel_surcharge_pct <- 0.08
 sec_mng_chrg_pct <- 0.0435
 ep_return_to_sender_fee <- 12.85 #same for both express and standard
 exp_eparcel_returns_fee <- 28.45 
 reg_eparcel_returns_fee <- 12.43
 over_max_limits_fee <-100
+predefined_text <- "1703_to_3103_incl"
 
 #### over max limites fee
 bill_cut_a$over_max_limits_fee <- ifelse(bill_cut_a$ACTUAL.WEIGHT > 22 | bill_cut_a$BILLED.LENGTH > 105 | bill_cut_a$cubic_size > 0.25, 100, NA)
@@ -569,26 +570,22 @@ output_all_services  <- rbind(output_a_2, output_b_2, output_c_2, output_d_2, ou
 output_all_services$base_charge_exgst <- ifelse(output_all_services$is_gst_free_zone == 'No', 
                                                 (output_all_services$base_charge_incgst/ 110) * 100, 
                                                 output_all_services$base_charge_incgst)
-# check if there is a difference
-discrepancy <- function(output_all_services) {
-  # Check if the rounded value of AMOUNT.EXCL.TAX is equal to base_charge_exgst
-  output_all_services$discrepancy <- ifelse(
-    round(output_all_services$AMOUNT.EXCL.TAX, 2) == round(output_all_services$base_charge_exgst, 2),
-    "no",
-    "yes"
-  )
-  
-  return(output_all_services)
-}
-output_all_services <- discrepancy(output_all_services)
+
 
 # find the tax amount
 output_all_services$base_charge_tax <- output_all_services$base_charge_incgst - output_all_services$base_charge_exgst 
 
 
 # calculate fuel surcharge based on ex gst
-output_all_services$fuel_surcharge <- output_all_services$base_charge_exgst * fuel_surcharge_pct
-output_all_services$fuel_gst <- output_all_services$fuel_surcharge  * gst
+# Calculate fuel surcharge only for non-International entries
+output_all_services$fuel_surcharge <- ifelse(output_all_services$uplift != "International",
+                                             output_all_services$base_charge_exgst * fuel_surcharge_pct,
+                                             0)
+
+# Calculate fuel GST based on fuel surcharge
+output_all_services$fuel_gst <- ifelse(output_all_services$fuel_surcharge != 0,
+                                       output_all_services$fuel_surcharge * gst,
+                                       0)
 
 
 # calculate security management fee
@@ -728,5 +725,5 @@ output_all_services_2 <- output_all_services_2
 #output_all_services_2 <- subset(output_all_services_2 , ARTICLE.ID %in% c('ET236199765AU'))
 ##### write to CSV ####
 
-write.csv(output_all_services_2, file = "output_all_services_2.csv")
+#write.csv(output_all_services_2, file = "output_all_services_2.csv")
 

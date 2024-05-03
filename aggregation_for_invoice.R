@@ -103,7 +103,6 @@ per_custo <- final_output_c %>%
     
     
     
-    
     # You can add more metrics as needed
   )
 
