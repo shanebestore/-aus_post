@@ -14,5 +14,5 @@ end_time <- Sys.time()
 
 # Calculate execution time
 execution_time <- end_time - start_time
-print(paste("Execution Time:", execution_time, "seconds"))
+print(paste("Execution Time:", execution_time))
 

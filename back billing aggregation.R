@@ -25,7 +25,9 @@ summary_by_description <- ap_post_supply %>%
 print(summary_by_description)
 
 
-write.csv(summary_by_description, file = "summary_by_custo_&_description_1703_to_3103_incl.csv")
+file_name <- paste0("summary_by_custo_&_description_", predefined_text, ".csv")
+
+write.csv(summary_by_description, file = file_name)
 
 ######## just the description ########
 
@@ -55,4 +57,7 @@ summary_by_description <- ap_post_supply %>%
 print(summary_by_description)
 
 
-write.csv(summary_by_description, file = "summary_by_description_1703_to_3103_incl.csv")
+file_name <- paste0("summary_by_description_", predefined_text, ".csv")
+
+write.csv(summary_by_description, file = file_name)
+

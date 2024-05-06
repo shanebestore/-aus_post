@@ -161,12 +161,14 @@ ap_post_supply <- ap_post_supply %>%
 
 #### bring across the services that we are not touching ####
 ap_post_supply$base_charge_incgst <- ifelse(ap_post_supply$DESCRIPTION %in% c("APGL NZ Express w/Signature", 
-                                                      "More to Pay", 
-                                                      "On Demand Afternoon", 
-                                                      "On Demand Return to Sender", 
-                                                      "On Demand Tonight", 
-                                                      "STC Parcels Domestic Fuel Surcharge", 
-                                                      "Unmanifest Article"),
+                                                     "More to Pay", 
+                                                     "On Demand Afternoon", 
+                                                     "On Demand Return to Sender", 
+                                                     "On Demand Tonight", 
+                                                     "STC Parcels Domestic Fuel Surcharge", 
+                                                     "Duties and Taxes Admin Fee (DDP)",
+                                                     "Delivered Duty Paid",
+                                                     "Unmanifest Article"),
                                             ap_post_supply$AMOUNT.INCL.TAX,
                                             ap_post_supply$base_charge_incgst)
 
@@ -176,20 +178,20 @@ ap_post_supply$base_charge_exgst <- ifelse(ap_post_supply$DESCRIPTION %in% c("AP
                                                      "On Demand Return to Sender", 
                                                      "On Demand Tonight", 
                                                      "STC Parcels Domestic Fuel Surcharge", 
+                                                     "Duties and Taxes Admin Fee (DDP)",
+                                                     "Delivered Duty Paid",
                                                      "Unmanifest Article"),
                                            ap_post_supply$AMOUNT.EXCL.TAX,
                                            ap_post_supply$base_charge_exgst)
 
 #########
+
 #ap_post_supply <- ap_post_supply %>%
 #  filter(BILLING.DOC == 7823757264)
 
 file_name <- paste0("ap_post_supply_", predefined_text, ".csv")
 
 write.csv(ap_post_supply, file = file_name)
-
-
-
 
 
 

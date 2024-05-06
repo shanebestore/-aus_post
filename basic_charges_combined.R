@@ -30,7 +30,7 @@ ep_return_to_sender_fee <- 12.85 #same for both express and standard
 exp_eparcel_returns_fee <- 28.45 
 reg_eparcel_returns_fee <- 12.43
 over_max_limits_fee <-100
-predefined_text <- "1703_to_3103_incl"
+
 
 #### over max limites fee
 bill_cut_a$over_max_limits_fee <- ifelse(bill_cut_a$ACTUAL.WEIGHT > 22 | bill_cut_a$BILLED.LENGTH > 105 | bill_cut_a$cubic_size > 0.25, 100, NA)
