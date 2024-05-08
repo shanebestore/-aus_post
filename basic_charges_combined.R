@@ -32,8 +32,10 @@ reg_eparcel_returns_fee <- 12.43
 over_max_limits_fee <-100
 
 
+
 #### over max limites fee
-bill_cut_a$over_max_limits_fee <- ifelse(bill_cut_a$ACTUAL.WEIGHT > 22 | bill_cut_a$BILLED.LENGTH > 105 | bill_cut_a$cubic_size > 0.25, 100, NA)
+bill_cut_a$over_max_limits_fee <- ifelse(bill_cut_a$service != 'International' & (bill_cut_a$ACTUAL.WEIGHT > 22 | bill_cut_a$BILLED.LENGTH > 105 | bill_cut_a$cubic_size > 0.25), 100, NA)
+
 
 #### Classifying weights ####
 cz_max_weight <- bill_cut_a$max_weight

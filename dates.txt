@@ -1,2 +1,0 @@
-end_date <- readline("Enter the end date (in format DDMM): ")
-0101
