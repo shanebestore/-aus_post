@@ -37,22 +37,22 @@ predefined_text <- paste( format(min_date, "%Y-%m-%d"), "to", format(max_date, "
 
 
 # pre feb base rates. Left in for pulling comparison calcs
-#cz_pre_feb_eparcel_regular_ex_mel = read.csv("cz_pre_feb_eparcel_regular_ex_mel.csv", head=TRUE, row.names = 1,  sep=",")
-#cz_pre_feb_eparcel_express_ex_mel = read.csv("cz_pre_feb_eparcel_express_ex_mel.csv", head=TRUE, row.names = 1,  sep=",")
-#cz_pre_feb_eparcel_regular_ex_syd = read.csv("cz_pre_feb_eparcel_regular_ex_syd.csv", head=TRUE, row.names = 1,  sep=",")
-#cz_pre_feb_eparcel_express_ex_syd = read.csv("cz_pre_feb_eparcel_express_ex_syd.csv", head=TRUE, row.names = 1,  sep=",")
+#cz_pre_feb_eparcel_regular_ex_mel = read.csv("reference_data/cz_pre_feb_eparcel_regular_ex_mel.csv", head=TRUE, row.names = 1,  sep=",")
+#cz_pre_feb_eparcel_express_ex_mel = read.csv("reference_data/cz_pre_feb_eparcel_express_ex_mel.csv", head=TRUE, row.names = 1,  sep=",")
+#cz_pre_feb_eparcel_regular_ex_syd = read.csv("reference_data/cz_pre_feb_eparcel_regular_ex_syd.csv", head=TRUE, row.names = 1,  sep=",")
+#cz_pre_feb_eparcel_express_ex_syd = read.csv("reference_data/cz_pre_feb_eparcel_express_ex_syd.csv", head=TRUE, row.names = 1,  sep=",")
 
 # post feb 1st base rates. Left in for pulling comparison calcs
 
-cz_post_feb_eparcel_regular_ex_mel = read.csv("cz_post_feb_eparcel_regular_ex_mel.csv", head=TRUE, row.names = 1,  sep=",")
-cz_post_feb_eparcel_express_ex_mel = read.csv("cz_post_feb_eparcel_express_ex_mel.csv", head=TRUE, row.names = 1,  sep=",")
-cz_post_feb_eparcel_regular_ex_syd = read.csv("cz_post_feb_eparcel_regular_ex_syd.csv", head=TRUE, row.names = 1,  sep=",")
-cz_post_feb_eparcel_express_ex_syd = read.csv("cz_post_feb_eparcel_express_ex_syd.csv", head=TRUE, row.names = 1,  sep=",")
-cz_post_feb_eparcel_express_ex_syd = read.csv("cz_post_feb_eparcel_express_ex_syd.csv", head=TRUE, row.names = 1,  sep=",")
-cz_post_feb_eparcel_wine_ex_mel = read.csv("cz_post_feb_eparcel_wine_ex_mel.csv", head=TRUE, row.names = 1,  sep=",")
-cz_post_feb_eparcel_wine_ex_syd = read.csv("cz_post_feb_eparcel_wine_ex_syd.csv", head=TRUE, row.names = 1,  sep=",")
-cz_post_feb_eparcel_international_express_merch = read.csv("cz_post_feb_eparcel_international_express_merch.csv", head=TRUE, row.names = 1,  sep=",")
-cz_post_feb_eparcel_international_standard = read.csv("cz_post_feb_eparcel_international_standard.csv", head=TRUE, row.names = 1,  sep=",")
+cz_post_feb_eparcel_regular_ex_mel = read.csv("reference_data/cz_post_feb_eparcel_regular_ex_mel.csv", head=TRUE, row.names = 1,  sep=",")
+cz_post_feb_eparcel_express_ex_mel = read.csv("reference_data/cz_post_feb_eparcel_express_ex_mel.csv", head=TRUE, row.names = 1,  sep=",")
+cz_post_feb_eparcel_regular_ex_syd = read.csv("reference_data/cz_post_feb_eparcel_regular_ex_syd.csv", head=TRUE, row.names = 1,  sep=",")
+cz_post_feb_eparcel_express_ex_syd = read.csv("reference_data/cz_post_feb_eparcel_express_ex_syd.csv", head=TRUE, row.names = 1,  sep=",")
+cz_post_feb_eparcel_express_ex_syd = read.csv("reference_data/cz_post_feb_eparcel_express_ex_syd.csv", head=TRUE, row.names = 1,  sep=",")
+cz_post_feb_eparcel_wine_ex_mel = read.csv("reference_data/cz_post_feb_eparcel_wine_ex_mel.csv", head=TRUE, row.names = 1,  sep=",")
+cz_post_feb_eparcel_wine_ex_syd = read.csv("reference_data/cz_post_feb_eparcel_wine_ex_syd.csv", head=TRUE, row.names = 1,  sep=",")
+cz_post_feb_eparcel_international_express_merch = read.csv("reference_data/cz_post_feb_eparcel_international_express_merch.csv", head=TRUE, row.names = 1,  sep=",")
+cz_post_feb_eparcel_international_standard = read.csv("reference_data/cz_post_feb_eparcel_international_standard.csv", head=TRUE, row.names = 1,  sep=",")
 
 
 # custo mark up
