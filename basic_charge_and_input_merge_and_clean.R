@@ -181,15 +181,26 @@ agg_block$base_charge_exgst <- ifelse(agg_block$DESCRIPTION %in% c(
                                       agg_block$AMOUNT.EXCL.TAX,
                                       agg_block$base_charge_exgst)
 
+# quick fix for charge to customer. Will have to revise this down the line
+#agg_block$avg_unit_price_charge_to_custo_ex_gst <- agg_block$QTY * agg_block$charge_to_custo_exgst
+max_charge <- pmax(agg_block$charge_to_custo_exgst, agg_block$base_charge_exgst, na.rm = TRUE)
+max_charge[is.na(max_charge)] <- 0
+
+agg_block$charge_to_custo_exgst <- max_charge
 agg_block$avg_unit_price_charge_to_custo_ex_gst <- agg_block$QTY * agg_block$charge_to_custo_exgst
+
 
 # write to the agg block if needed
 #agg_block <- agg_block %>%
-#  filter(BILLING.DOC == 7823757264)
+#  filter(ASSIGNMENT.NO. == 'AP171289101')
+
+#AP171289101
+
+#write.csv(agg_block, file = "agg_block.csv")
 
 #file_name <- paste0("ap_post_supply_", predefined_text, ".csv")
 #write.csv(agg_block, file = file_name)
-#write.csv(agg_block, file = "agg_block.csv")
+
 
 #### build ap_post_supply ####
 
