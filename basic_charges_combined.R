@@ -358,6 +358,8 @@ output_g <- subset_and_operate(output_a, "exp_eparcel_returns", exp_eparcel_retu
 # eParcel Post Return (Reg)
 output_h <- subset_and_operate(output_a, c("reg_eparcel_returns", "reg_ep_call_for_return"), reg_eparcel_returns_fee)
 
+
+
 #### base charge for eparcel_wine.VIC ####
 
 # cut the dataset down to correct uplift service
@@ -528,7 +530,7 @@ row_index_max <- unlist(lapply(row_name_max, function(row_name_max) {
 }))
 
 output_k_2 <-cbind(output_k1, (cbind(row_index_max, col_index_max)))
-sapply(output_k_2, class)
+#sapply(output_k_2, class)
 
 # query new base charge rate 
 # Function to extract values from charge zone dataset based on indices
@@ -552,8 +554,32 @@ calculate_final_charge <- function(charge_value_max_incgst, weight_category_max,
 
 output_k_2$base_charge_incgst <- mapply(calculate_final_charge, output_k_2$charge_value_max_incgst, output_k_2$weight_category_max, output_k_2$max_weight, output_k_2$row_index_max)
 
+#### the services we are not changing namelyt "APGL NZ Express w/Signature", "On Demand Tonight", "On Demand Afternoon"----
+
+
+subset_and_operate <- function(data) {
+  subset_data <- subset(data, DESCRIPTION %in% c("APGL NZ Express w/Signature", "On Demand Tonight", "On Demand Afternoon"))
+  if (nrow(subset_data) > 0) {
+    subset_data$row_index_max <- NA
+    subset_data$col_index_max <- NA
+    subset_data$charge_value_max_incgst <- NA
+    subset_data$base_charge_incgst <- subset_data$AMOUNT.INCL.TAX
+    return(subset_data)
+  } else {
+    return(NULL)
+  }
+}
+
+# Applying the function to output_a
+output_m <- subset_and_operate(output_a)
+
+
+
+
+
+
 #### combine all DFs together ######
-output_all_services  <- rbind(output_a_2, output_b_2, output_c_2, output_d_2, output_f, output_g, output_h, output_i_2, output_j_2, output_l_2, output_k_2)
+output_all_services  <- rbind(output_a_2, output_b_2, output_c_2, output_d_2, output_f, output_g, output_h, output_i_2, output_j_2, output_l_2, output_k_2, output_m)
 
 #write.csv(output_all_services, file = "output_all_services.csv")
 
@@ -580,7 +606,7 @@ output_all_services$base_charge_tax <- output_all_services$base_charge_incgst - 
 
 # calculate fuel surcharge based on ex gst
 # Calculate fuel surcharge only for non-International entries
-output_all_services$fuel_surcharge <- ifelse(output_all_services$uplift != "International",
+output_all_services$fuel_surcharge <- ifelse(!(output_all_services$uplift %in% c("International", "APGL", "OnDemand")),
                                              output_all_services$base_charge_exgst * fuel_surcharge_pct,
                                              0)
 
@@ -643,6 +669,8 @@ extract_charge_value_uplift <- function(row_index_uplift, col_index_uplift) {
 
 output_all_services_2$charge_value_uplift <- mapply(extract_charge_value_uplift, output_all_services_2$row_index_uplift, output_all_services_2$col_index_uplift)
 
+
+#write.csv(output_all_services_2, file = "output_all_services.csv")
 #### warning cols taken here
 # Col to highlight if we are missing weight information or custo has no uplift
 # Create a new column 'warnings' in output_all_services_2

@@ -22,10 +22,10 @@ library(dplyr)
 #1013156007-5729374082957312
 
 #bill = read.csv("billing_docs/1013016084-6214851349184512.csv", head=TRUE, sep=",")  # 01 - 16 feb
-bill = read.csv("billing_docs/1013048181-6514511150317568.csv", head=TRUE, sep=",")  # 17 - 28 feb
+#bill = read.csv("billing_docs/1013048181-6514511150317568.csv", head=TRUE, sep=",")  # 17 - 28 feb
 #bill = read.csv("billing_docs/1013085979-5806754721955840.csv", head=TRUE, sep=",")  # 01 - 16 Mar
 #bill = read.csv("billing_docs/1013111472-5847093054799872.csv", head=TRUE, sep=",")  # 17 - 31 Mar
-#bill = read.csv("billing_docs/1013156007-5729374082957312.csv", head=TRUE, sep=",")  # 01 - 15 April
+bill = read.csv("billing_docs/1013156007-5729374082957312.csv", head=TRUE, sep=",")  # 01 - 15 April
 #bill = read.csv("billing_docs/1013168047-5072493127663616.csv", head=TRUE, sep=",")  # 16 - 30 April;
 
 # Get the min and max dates the bill covers
@@ -57,9 +57,9 @@ cz_post_feb_eparcel_international_standard = read.csv("reference_data/cz_post_fe
 
 
 # custo mark up
-customer_uplift_march_24 = read.csv("customer_uplift_march_24.csv", head=TRUE, row.names = 1,  sep=",")
+customer_uplift_march_24 = read.csv("reference_data/customer_uplift_march_24.csv", head=TRUE, row.names = 1,  sep=",")
 #custo codes
-estore_custo_codes = read.csv("estore_custo_codes.csv", head=TRUE, sep=",")
+estore_custo_codes = read.csv("reference_data/estore_custo_codes.csv", head=TRUE, sep=",")
 
 #colnames(cz_melb_espress) <- sub("^X", "", colnames(cz_melb_espress))
 
@@ -69,7 +69,7 @@ bill_cut1 <- bill[!grepl("charge|surcharge|admin|fuel", bill$DESCRIPTION, ignore
 
 #cutting the dataset down to just the metrics we need for ALL of the basic calculations
 bill_cut1 <-  bill_cut1[,  c("REGION", "RECEIVING.COUNTRY", "CUSTOMER", "NAME_1", "NAME_2", "NAME_3", "DESCRIPTION", "BILLING.DOC", "SERVICE.DATE", "TO.ADDRESS", "CONSIGNMENT.ID", "ARTICLE.ID",   
-                            "BILLED.LENGTH", "BILLED.WIDTH", "BILLED.HEIGHT", "CUBIC.WEIGHT", "BILLED.WEIGHT", "ACTUAL.WEIGHT", "CHARGE.ZONE", "FROM.STATE", "AVG..UNIT.PRICE" , "AMOUNT.EXCL.TAX", "DECLARED.WEIGHT")] 
+                            "BILLED.LENGTH", "BILLED.WIDTH", "BILLED.HEIGHT", "CUBIC.WEIGHT", "BILLED.WEIGHT", "ACTUAL.WEIGHT", "CHARGE.ZONE", "FROM.STATE", "AVG..UNIT.PRICE" ,"AMOUNT.INCL.TAX", "AMOUNT.EXCL.TAX", "DECLARED.WEIGHT")] 
 
 # get the lift service as per uplift card. This covers all thats in the description
 bill_cut1$service <- ifelse(bill_cut1$REGION == "VIC" & bill_cut1$DESCRIPTION == "Parcel Post with Signature", "Regular.VIC",
@@ -85,7 +85,9 @@ bill_cut1$service <- ifelse(bill_cut1$REGION == "VIC" & bill_cut1$DESCRIPTION ==
                                                                                                    ifelse(bill_cut1$REGION == "NSW" & bill_cut1$DESCRIPTION == "EPARCEL WINE STD", "Wine.NSW",
                                                                                                           ifelse(bill_cut1$DESCRIPTION == "PACK AND TRACK INTERNATIONAL", "International",
                                                                                                                  ifelse(bill_cut1$DESCRIPTION == "Express Courier International (eParcel)", "International",
-                                                         NA)))))))))))))
+                                                                                                                        ifelse(bill_cut1$DESCRIPTION == "APGL NZ Express w/Signature", "APGL",
+                                                                                                                               ifelse(bill_cut1$DESCRIPTION %in% c("On Demand Tonight", "On Demand Afternoon"), "OnDemand",
+                                                         NA)))))))))))))))
 
 bill_cut1$uplift <- ifelse(bill_cut1$DESCRIPTION == "Express Post Parcels (BYO up to 5kg)", "EPP_fivekg",
                            ifelse(bill_cut1$DESCRIPTION %in% c("eParcel Return To Sender", "eParcel Post Return", "eParcel Call For Return"), 
@@ -108,7 +110,10 @@ bill_cut1$uplift <- ifelse(bill_cut1$DESCRIPTION == "Express Post Parcels (BYO u
                                                                      ifelse(bill_cut1$DESCRIPTION == "Parcel Post with Signature", "Regular.NSW",
                                                                             ifelse(bill_cut1$DESCRIPTION == "Express Post with Signature", "Express.NSW", NA)), NA
                                                               )))))))
-       
+
+# Additional Conditions (no new rates for these)
+bill_cut1$uplift <- ifelse(bill_cut1$DESCRIPTION %in% c("On Demand Tonight", "On Demand Afternoon"), "OnDemand", bill_cut1$uplift)
+bill_cut1$uplift <- ifelse(bill_cut1$DESCRIPTION == "APGL NZ Express w/Signature", "APGL", bill_cut1$uplift)
 
 
 #### customer code ####

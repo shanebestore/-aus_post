@@ -155,11 +155,9 @@ agg_block <- agg_block %>%
   select(-total_sec_mng_chrg)
 
 #### bring across the services that we are not touching ####
-agg_block$base_charge_incgst <- ifelse(agg_block$DESCRIPTION %in% c("APGL NZ Express w/Signature", 
-                                                     "More to Pay", 
-                                                     "On Demand Afternoon", 
+agg_block$base_charge_incgst <- ifelse(agg_block$DESCRIPTION %in% c(
+                                                     "More to Pay",
                                                      "On Demand Return to Sender", 
-                                                     "On Demand Tonight", 
                                                      "STC Parcels Domestic Fuel Surcharge", 
                                                      "Duties and Taxes Admin Fee (DDP)",
                                                      "Delivered Duty Paid",
@@ -170,11 +168,9 @@ agg_block$base_charge_incgst <- ifelse(agg_block$DESCRIPTION %in% c("APGL NZ Exp
                                        agg_block$AMOUNT.INCL.TAX,
                                        agg_block$base_charge_incgst)
 
-agg_block$base_charge_exgst <- ifelse(agg_block$DESCRIPTION %in% c("APGL NZ Express w/Signature", 
-                                                     "More to Pay", 
-                                                     "On Demand Afternoon", 
+agg_block$base_charge_exgst <- ifelse(agg_block$DESCRIPTION %in% c(
+                                                     "More to Pay",
                                                      "On Demand Return to Sender", 
-                                                     "On Demand Tonight", 
                                                      "STC Parcels Domestic Fuel Surcharge", 
                                                      "Duties and Taxes Admin Fee (DDP)",
                                                      "Delivered Duty Paid",
@@ -185,7 +181,7 @@ agg_block$base_charge_exgst <- ifelse(agg_block$DESCRIPTION %in% c("APGL NZ Expr
                                       agg_block$AMOUNT.EXCL.TAX,
                                       agg_block$base_charge_exgst)
 
-agg_block$avg_unit_price_ex_gst <- agg_block$QTY * agg_block$base_charge_exgst
+agg_block$avg_unit_price_charge_to_custo_ex_gst <- agg_block$QTY * agg_block$charge_to_custo_exgst
 
 # write to the agg block if needed
 #agg_block <- agg_block %>%
@@ -193,6 +189,7 @@ agg_block$avg_unit_price_ex_gst <- agg_block$QTY * agg_block$base_charge_exgst
 
 #file_name <- paste0("ap_post_supply_", predefined_text, ".csv")
 #write.csv(agg_block, file = file_name)
+#write.csv(agg_block, file = "agg_block.csv")
 
 #### build ap_post_supply ####
 
@@ -202,9 +199,11 @@ desired_order <- c(
   "ACTUAL.WIDTH", "ACTUAL.HEIGHT", "ACTUAL.UNIT.TYPE", "DECLARED.WEIGHT",	"DECLARED.UNIT",	"DECLARED.LENGTH",	"DECLARED.WIDTH",
   "DECLARED.HEIGHT",	"DECLARED.UNIT.TYPE", "FROM.NAME", 	"FROM.ADDRESS",	"FROM.CITY",	"FROM.STATE",	"FROM.POSTAL.CODE",
   "TO.NAME",	"TO.ADDRESS",	"TO.CITY",	"TO.STATE",	"TO.POSTAL.CODE", "CUST.REF.1",	"CUST.REF.2",	"BILLED.LENGTH", "BILLED.WIDTH",
-  "BILLED.HEIGHT", "CUBIC.WEIGHT", "BILLED.WEIGHT", "CHARGE.CODE", "intl_charge_zone", "RECEIVING.COUNTRY", "CHARGE.ZONE", "service", "QTY","AMOUNT.EXCL.TAX", 
-  "avg_unit_price_ex_gst",   "base_charge_exgst")
-# Reorder the columns in final_output
+  "BILLED.HEIGHT", "CUBIC.WEIGHT", "BILLED.WEIGHT", "CHARGE.CODE", "intl_charge_zone", "RECEIVING.COUNTRY", "CHARGE.ZONE", "service", "QTY",
+  "avg_unit_price_charge_to_custo_ex_gst", "charge_to_custo_exgst")
+
+# Reorder the columns in final_output.
+# this is needed for the consoladated 
 ap_post_supply <- agg_block [, desired_order]
 
 
