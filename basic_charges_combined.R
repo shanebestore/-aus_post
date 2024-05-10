@@ -24,7 +24,7 @@ bill_cut_a <- mutate(bill_cut_a,
 #### Declare the charges ####
 #fuel charge_ex_gst has to be calculated from the exgst charge value
 gst <- 0.1
-fuel_surcharge_pct <- 0.08
+fuel_surcharge_pct <- 0.097
 sec_mng_chrg_pct <- 0.0435
 ep_return_to_sender_fee <- 12.85 #same for both express and standard
 exp_eparcel_returns_fee <- 28.45 
@@ -548,9 +548,9 @@ output_k_2$base_charge_incgst <- mapply(calculate_final_charge, output_k_2$charg
 
 #### the services we are not changing namely "APGL NZ Express w/Signature", "On Demand Tonight", "On Demand Afternoon"----
 
-
+#, "Express Post Parcels (BYO up to 5kg)"
 subset_and_operate <- function(data) {
-  subset_data <- subset(data, DESCRIPTION %in% c("APGL NZ Express w/Signature", "On Demand Tonight", "On Demand Afternoon", "Express Post Parcels (BYO up to 5kg)"))
+  subset_data <- subset(data, DESCRIPTION %in% c("APGL NZ Express w/Signature", "On Demand Tonight", "On Demand Afternoon")) 
   if (nrow(subset_data) > 0) {
     subset_data$row_index_max <- NA
     subset_data$col_index_max <- NA
@@ -741,11 +741,32 @@ output_all_services_2$charge_to_custo_exgst <- ifelse(is.na(output_all_services_
                                                       NA,
                                                       output_all_services_2$charge_value_max_exgst_numeric + output_all_services_2$uplift_figure_exgst)
 
+
+# fuel surcharge based on the uplift
+
+# calculate fuel surcharge based on mark up
+# Calculate fuel surcharge only for non-International entries
+output_all_services_2$fuel_surcharge_uplifted <- ifelse(!(output_all_services_2$uplift %in% c("International", "APGL", "OnDemand")),
+                                                        output_all_services_2$charge_to_custo_exgst * fuel_surcharge_pct,
+                                             0)
+
+# Calculate fuel GST based on fuel surcharge
+output_all_services_2$fuel_surchrg_uplift_gst <- ifelse(output_all_services_2$fuel_surcharge_uplifted != 0,
+                                                        output_all_services_2$fuel_surcharge_uplifted * gst,
+                                       0)
+
+
+# calculate security management fee
+output_all_services_2$sec_mng_chrg_uplifted <- ifelse(output_all_services_2$DESCRIPTION == "Express Post with Signature",
+                                                    output_all_services_2$charge_to_custo_exgst * sec_mng_chrg_pct,
+                                           NA)
+output_all_services_2$sec_mng_uplifted_gst <- output_all_services_2$sec_mng_chrg_uplifted * gst
+
 # update table name
 output_all_services_2 <- output_all_services_2
 
 #output_all_services_2 <- subset(output_all_services_2 , ARTICLE.ID %in% c('ET236199765AU'))
 ##### write to CSV ####
 
-#write.csv(output_all_services_2, file = "output_all_services_2.csv")
+write.csv(output_all_services_2, file = "output_all_services_2.csv")
 

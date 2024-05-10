@@ -1,6 +1,6 @@
 #### Generate billing doc output file (line by line comparison) ####
 # join the selected columns onto the billing doc in the correct places
-# this creates the billing_doc_output which is a just the original output will the new columns added
+# this creates the billing_doc_output which is a just the original output withe the new columns added
 
 # rename the article_id
 names(bill)[names(bill) == "ARTICLE.ID"] <- "article_id"
@@ -9,7 +9,7 @@ names(output_all_services_2)[names(output_all_services_2) == "ARTICLE.ID"] <- "a
 # Specify columns to merge from output_all_services_2
 merge_cols <- c( "service", "uplift", "DESCRIPTION", "BILLING.DOC", "article_id", 
                 "base_charge_incgst", "base_charge_exgst", "base_charge_tax", "charge_value_uplift", "uplift_figure_exgst", 
-                "charge_to_custo_exgst", "cubic_weight", "max_weight", "fuel_surcharge", "fuel_gst", "sec_mng_chrg", "sec_mng_gst", 
+                "charge_to_custo_exgst", "cubic_weight", "max_weight", "fuel_surcharge","fuel_surcharge_uplifted", "fuel_gst","fuel_surchrg_uplift_gst", "sec_mng_chrg", "sec_mng_chrg_uplifted", "sec_mng_gst", "sec_mng_uplifted_gst",
                 "over_max_limits_fee", "weight_category_max", "warnings", "is_gst_free_zone")
 #"customer_code2", "customer_code",
 selected_output_all_services_2 <- output_all_services_2[, merge_cols]
@@ -37,19 +37,137 @@ billing_doc_output  <- cbind(billing_doc_output [, 1:billed_weight_index  ],
                       billing_doc_output [, c("cubic_weight", "max_weight", "weight_category_max", "service", "uplift")],
                       billing_doc_output [, (billed_weight_index  + 1):ncol(billing_doc_output )])
 
-
-# Quick descrepancy check 
-
+# Quick descrepancy check for testing purposes
 discrepancy <- function(billing_doc_output) {
-# Check if the rounded value of AMOUNT.EXCL.TAX is equal to base_charge_exgst
+  # Check if the rounded value of AMOUNT.EXCL.TAX is equal to base_charge_exgst
   billing_doc_output$discrepancy <- ifelse(
-  round(billing_doc_output$AMOUNT.INCL.TAX, 2) == round(billing_doc_output$base_charge_incgst, 2),
-   "no",
-   "yes"
+    round(billing_doc_output$AMOUNT.INCL.TAX, 2) == round(billing_doc_output$base_charge_incgst, 2),
+    "no",
+    "yes"
   )
   return(billing_doc_output)
 }
 billing_doc_output <- discrepancy(billing_doc_output)
+
+# remove duplicates and reorder 
+  desired_order <- c("article_id", "BILLING.DOC", "DESCRIPTION", "CUSTOMER", "NAME_1", "NAME_2", "NAME_3", "STREET", "CITY", "REGION", "POST.CODE", 
+  "TELEPHONE", "FAX.NUMBER", "MAILING.STATEMENT.NO.", "ASSIGNMENT.NO.", "SERVICE.DATE", "WORK.CENTRE", "WORK.CENTRE.NAME", "CUSTOMER.REF", "CUSTOMER.REFDOC", 
+  "ITEM", "MATERIAL", "QTY", "AVG..UNIT.PRICE", "AMOUNT.INCL.TAX", "base_charge_incgst", "base_charge_exgst", "discrepancy", "base_charge_tax", "charge_value_uplift", 
+  "uplift_figure_exgst", "charge_to_custo_exgst", "warnings", "TAX.CODE", "TAX.AMOUNT", "AMOUNT.EXCL.TAX", "INVOICE.TOTAL", "TOTAL.QTY", "BILLING.CURRENCY", 
+  "EXCHANGE.RATE", "LOCAL.CURRENCY", "FUEL.SURCHARGE..", "FUEL.SURCHARGE.DISC", "FUEL.GST", "fuel_surcharge","fuel_surcharge_uplifted", "fuel_gst","fuel_surchrg_uplift_gst", "sec_mng_chrg", "sec_mng_chrg_uplifted", "sec_mng_gst", "sec_mng_uplifted_gst",
+  "over_max_limits_fee", "MHS.FEE", "MHS.DISCOUNT", "MHS.GST", "SMC.FEE", "SMC.DISCOUNT", "SMC.GST", "INTL.SURCHARGE", "INTL.SURCHARGE.MANIFEST", "INVOICE.NO", 
+  "BILLING.DATE", "SALES.ORDER", "SALES.ORDER.ITEM", "PAYER", "PAYER.NAME", "CONSIGNMENT.ID", "LODGEMENT.DATE", "ACTUAL.WEIGHT", "ACTUAL.UNIT", "ACTUAL.LENGTH", 
+  "ACTUAL.WIDTH", "ACTUAL.HEIGHT", "ACTUAL.UNIT.TYPE", "DECLARED.WEIGHT", "DECLARED.UNIT", "DECLARED.LENGTH", "DECLARED.WIDTH", "DECLARED.HEIGHT", 
+  "DECLARED.UNIT.TYPE", "FROM.NAME", "FROM.ADDRESS", "FROM.CITY", "FROM.STATE", "FROM.POSTAL.CODE", "FROM.EMAIL.ADDRESS", "TO.NAME", "TO.ADDRESS", "TO.CITY", 
+  "TO.STATE", "TO.POSTAL.CODE", "TO.EMAIL.ADDRESS", "RECORD.COUNT", "TOT.AMOUNT.EXCL.TAX", "CUST.REF.1", "CUST.REF.2", "BILLED.LENGTH", "BILLED.WIDTH", 
+  "BILLED.HEIGHT", "CUBIC.WEIGHT", "BILLED.WEIGHT", "cubic_weight", "max_weight", "weight_category_max", "service", "uplift", "INTERNATIONAL.SURCHARGE.RATE", 
+  "CHARGE.CODE", "CHARGE.ZONE", "ATO.DESPATCH.REFERENCE.NUMBER", "RECEIVING.COUNTRY", "SIGNATURE.ON.DELIVERY", "TRANSIT.COVER", "CAPTURE.ID", 
+  "UNMANIFESTED.ARTICLE", "RETURN.TO.SENDER", "LODGEMENT.ZONE", "DESTINATION.ZONE", "CUST.REF.3", "WINE...ALCOHOL", "PEAK.FEE", "PEAK.FEE.DISCOUNT", 
+  "PEAK.FEE.GST", "OVER.MAX.LIMITS.FEE", "OVER.MAX.LIMITS.FEE.DISCOUNT", "OVER.MAX.LIMITS.FEE.GST", "INTERNATIONAL.UNMANIFESTED.FEE", "customer_code2", 
+  "customer_code", "is_gst_free_zone")
+
+# Reorder the columns in final_output
+billing_doc_output <- billing_doc_output [, desired_order]
+
+
+#### sum for the aggregation lines ----
+
+# Calculate the sum of fuel_surcharge_uplifted per BILLING.DOC
+fuel_surcharge_per_billing_doc <- billing_doc_output %>%
+  filter(is_gst_free_zone == 'No') %>%
+  group_by(BILLING.DOC) %>%
+  summarise(total_fuel_surcharge = sum(fuel_surcharge_uplifted, na.rm = TRUE))
+
+# Merge the total_fuel_surcharge back to the original dataframe
+billing_doc_output <- left_join(billing_doc_output, fuel_surcharge_per_billing_doc, by = "BILLING.DOC")
+
+# Update base_charge_exgst with the total fuel surcharge where DESCRIPTION is "AP Parcels Domestic Fuel Surcharge"
+billing_doc_output <- billing_doc_output %>%
+  mutate(base_charge_exgst = ifelse(DESCRIPTION == "AP Parcels Domestic Fuel Surcharge",
+                                    total_fuel_surcharge,
+                                    base_charge_exgst)) %>%
+  select(-total_fuel_surcharge)
+
+
+
+#### sum the fuel_surcharg tax free ---
+fuel_surcharge_per_billing_doc <- billing_doc_output %>%
+  filter(is_gst_free_zone == 'Yes') %>%
+  group_by(BILLING.DOC) %>%
+  summarise(total_fuel_surcharge = sum(fuel_surcharge_uplifted, na.rm = TRUE))
+
+billing_doc_output <- left_join(billing_doc_output, fuel_surcharge_per_billing_doc, by = "BILLING.DOC")
+
+billing_doc_output <- billing_doc_output %>%
+  mutate(base_charge_exgst = ifelse(DESCRIPTION == "AP Parcels Domestic Fuel Surchg Tax Free",
+                                    total_fuel_surcharge,
+                                    base_charge_exgst)) %>%
+  select(-total_fuel_surcharge)
+
+#### sum the security management fee ----
+sec_mng_chrg_per_billing_doc <- billing_doc_output %>%
+  filter(is_gst_free_zone == 'No') %>%
+  group_by(BILLING.DOC) %>%
+  summarise(total_sec_mng_chrg = sum(sec_mng_chrg_uplifted, na.rm = TRUE))
+
+billing_doc_output <- left_join(billing_doc_output, sec_mng_chrg_per_billing_doc, by = "BILLING.DOC")
+
+billing_doc_output <- billing_doc_output %>%
+  mutate(base_charge_exgst = ifelse(DESCRIPTION == "AP Security Mgt Charge",
+                                    total_sec_mng_chrg,
+                                    base_charge_exgst)) %>%
+  select(-total_sec_mng_chrg)
+
+#### sum the security AP Security Mgt Charge Tax Free ----
+
+sec_mng_chrg_per_billing_doc <- billing_doc_output %>%
+  filter(is_gst_free_zone == 'Yes') %>%
+  group_by(BILLING.DOC) %>%
+  summarise(total_sec_mng_chrg = sum(sec_mng_chrg_uplifted, na.rm = TRUE))
+
+billing_doc_output <- left_join(billing_doc_output, sec_mng_chrg_per_billing_doc, by = "BILLING.DOC")
+
+billing_doc_output <- billing_doc_output %>%
+  mutate(base_charge_exgst = ifelse(DESCRIPTION == "AP Security Mgt Charge Tax Free",
+                                    total_sec_mng_chrg,
+                                    base_charge_exgst)) %>%
+  select(-total_sec_mng_chrg)
+
+#### bring across the services that we are not touching ----
+billing_doc_output$base_charge_incgst <- ifelse(billing_doc_output$DESCRIPTION %in% c(
+  "More to Pay",
+  "On Demand Return to Sender", 
+  "STC Parcels Domestic Fuel Surcharge", 
+  "Duties and Taxes Admin Fee (DDP)",
+  "Delivered Duty Paid",
+  "AP International Line Haul Surcharge",
+  "International  Returns AIR",
+  "Lodgement Management Fee",
+  "Unmanifest Article"),
+  billing_doc_output$AMOUNT.INCL.TAX,
+  billing_doc_output$base_charge_incgst)
+
+billing_doc_output$base_charge_exgst <- ifelse(billing_doc_output$DESCRIPTION %in% c(
+  "More to Pay",
+  "On Demand Return to Sender", 
+  "STC Parcels Domestic Fuel Surcharge", 
+  "Duties and Taxes Admin Fee (DDP)",
+  "Delivered Duty Paid",
+  "AP International Line Haul Surcharge",
+  "International  Returns AIR",
+  "Lodgement Management Fee",
+  "Unmanifest Article"),
+  billing_doc_output$AMOUNT.EXCL.TAX,
+  billing_doc_output$base_charge_exgst)
+
+# quick fix for charge to customer. Will have to revise this down the line
+#billing_doc_output$avg_unit_price_charge_to_custo_ex_gst <- billing_doc_output$QTY * billing_doc_output$charge_to_custo_exgst
+max_charge <- pmax(billing_doc_output$charge_to_custo_exgst, billing_doc_output$base_charge_exgst, na.rm = TRUE)
+max_charge[is.na(max_charge)] <- 0
+
+billing_doc_output$charge_to_custo_exgst <- max_charge
+billing_doc_output$avg_unit_price_charge_to_custo_ex_gst <- billing_doc_output$QTY * billing_doc_output$charge_to_custo_exgst
+
 
 # generate the file path
 output_folder <- file.path(getwd(), paste0("output_billing_dates_", predefined_text))
@@ -80,129 +198,10 @@ desired_order <- c(
  "SMC.FEE", "sec_mng_chrg", "over_max_limits_fee", "BILLING.DOC", "is_gst_free_zone"#, "OVER.MAX.LIMITS.FEE"
 )
 # Reorder the columns in final_output
-agg_block <- billing_doc_output [, desired_order]
-
-#### sum the fuel_surcharge ####
-
-# Calculate the sum of fuel_surcharge per BILLING.DOC
-fuel_surcharge_per_billing_doc <- agg_block %>%
-  filter(is_gst_free_zone == 'No') %>%
-  group_by(BILLING.DOC) %>%
-  summarise(total_fuel_surcharge = sum(fuel_surcharge, na.rm = TRUE))
-
-# Merge the total_fuel_surcharge back to the original dataframe
-agg_block <- left_join(agg_block, fuel_surcharge_per_billing_doc, by = "BILLING.DOC")
-
-# Update base_charge_exgst with the total fuel surcharge where DESCRIPTION is "AP Parcels Domestic Fuel Surcharge"
-agg_block <- agg_block %>%
-  mutate(base_charge_exgst = ifelse(DESCRIPTION == "AP Parcels Domestic Fuel Surcharge",
-                                    total_fuel_surcharge,
-                                    base_charge_exgst)) %>%
-  select(-total_fuel_surcharge)
-
-#### sum the fuel_surcharg tax free ####
-
-# Calculate the sum of fuel_surcharge per BILLING.DOC where is_gst_free is 'yes'
-fuel_surcharge_per_billing_doc <- agg_block %>%
-  filter(is_gst_free_zone == 'Yes') %>%
-  group_by(BILLING.DOC) %>%
-  summarise(total_fuel_surcharge = sum(fuel_surcharge, na.rm = TRUE))
-
-# Merge the total_fuel_surcharge back to the original dataframe
-agg_block <- left_join(agg_block, fuel_surcharge_per_billing_doc, by = "BILLING.DOC")
-
-# Update base_charge_exgst with the total fuel surcharge where DESCRIPTION is "AP Parcels Domestic Fuel Surcharge"
-agg_block <- agg_block %>%
-  mutate(base_charge_exgst = ifelse(DESCRIPTION == "AP Parcels Domestic Fuel Surchg Tax Free",
-                                    total_fuel_surcharge,
-                                    base_charge_exgst)) %>%
-  select(-total_fuel_surcharge)
-
-#### sum the security management fee ####
-
-# Calculate the sum of sec_mng_chrg per BILLING.DOC
-sec_mng_chrg_per_billing_doc <- agg_block %>%
-  filter(is_gst_free_zone == 'No') %>%
-  group_by(BILLING.DOC) %>%
-  summarise(total_sec_mng_chrg = sum(sec_mng_chrg, na.rm = TRUE))
-
-# Merge the total_sec_mng_chrg back to the original dataframe
-agg_block <- left_join(agg_block, sec_mng_chrg_per_billing_doc, by = "BILLING.DOC")
-
-# Update base_charge_incgst with the total sec_mng_chrg where DESCRIPTION is "AP Security Mgt Charge"
-agg_block <- agg_block %>%
-  mutate(base_charge_exgst = ifelse(DESCRIPTION == "AP Security Mgt Charge",
-                                    total_sec_mng_chrg,
-                                    base_charge_exgst)) %>%
-  select(-total_sec_mng_chrg)
-
-#### sum the security AP Security Mgt Charge Tax Free ####
-
-# Calculate the sum of sec_mng_chrg per BILLING.DOC
-sec_mng_chrg_per_billing_doc <- agg_block %>%
-  filter(is_gst_free_zone == 'Yes') %>%
-  group_by(BILLING.DOC) %>%
-  summarise(total_sec_mng_chrg = sum(sec_mng_chrg, na.rm = TRUE))
-
-# Merge the total_sec_mng_chrg back to the original dataframe
-agg_block <- left_join(agg_block, sec_mng_chrg_per_billing_doc, by = "BILLING.DOC")
-
-# Update base_charge_incgst with the total sec_mng_chrg where DESCRIPTION is "AP Security Mgt Charge"
-agg_block <- agg_block %>%
-  mutate(base_charge_exgst = ifelse(DESCRIPTION == "AP Security Mgt Charge Tax Free",
-                                    total_sec_mng_chrg,
-                                    base_charge_exgst)) %>%
-  select(-total_sec_mng_chrg)
-
-#### bring across the services that we are not touching ####
-agg_block$base_charge_incgst <- ifelse(agg_block$DESCRIPTION %in% c(
-                                                     "More to Pay",
-                                                     "On Demand Return to Sender", 
-                                                     "STC Parcels Domestic Fuel Surcharge", 
-                                                     "Duties and Taxes Admin Fee (DDP)",
-                                                     "Delivered Duty Paid",
-                                                     "AP International Line Haul Surcharge",
-                                                     "International  Returns AIR",
-                                                     "Lodgement Management Fee",
-                                                     "Unmanifest Article"),
-                                       agg_block$AMOUNT.INCL.TAX,
-                                       agg_block$base_charge_incgst)
-
-agg_block$base_charge_exgst <- ifelse(agg_block$DESCRIPTION %in% c(
-                                                     "More to Pay",
-                                                     "On Demand Return to Sender", 
-                                                     "STC Parcels Domestic Fuel Surcharge", 
-                                                     "Duties and Taxes Admin Fee (DDP)",
-                                                     "Delivered Duty Paid",
-                                                     "AP International Line Haul Surcharge",
-                                                     "International  Returns AIR",
-                                                     "Lodgement Management Fee",
-                                                     "Unmanifest Article"),
-                                      agg_block$AMOUNT.EXCL.TAX,
-                                      agg_block$base_charge_exgst)
-
-# quick fix for charge to customer. Will have to revise this down the line
-#agg_block$avg_unit_price_charge_to_custo_ex_gst <- agg_block$QTY * agg_block$charge_to_custo_exgst
-max_charge <- pmax(agg_block$charge_to_custo_exgst, agg_block$base_charge_exgst, na.rm = TRUE)
-max_charge[is.na(max_charge)] <- 0
-
-agg_block$charge_to_custo_exgst <- max_charge
-agg_block$avg_unit_price_charge_to_custo_ex_gst <- agg_block$QTY * agg_block$charge_to_custo_exgst
+#billing_doc_output <- billing_doc_output [, desired_order]
 
 
-# write to the agg block if needed
-#agg_block <- agg_block %>%
-#  filter(ASSIGNMENT.NO. == 'AP171289101')
-
-#AP171289101
-
-#write.csv(agg_block, file = "agg_block.csv")
-
-#file_name <- paste0("ap_post_supply_", predefined_text, ".csv")
-#write.csv(agg_block, file = file_name)
-
-
-#### build ap_post_supply ####
+#### build ap_post_supply ----
 
 desired_order <- c(
   "customer_code", "NAME_1", "MAILING.STATEMENT.NO.", "ASSIGNMENT.NO.", "SERVICE.DATE", "DESCRIPTION",
@@ -215,7 +214,7 @@ desired_order <- c(
 
 # Reorder the columns in final_output.
 # this is needed for the consoladated 
-ap_post_supply <- agg_block [, desired_order]
+ap_post_supply <- billing_doc_output [, desired_order]
 
 
 
@@ -229,12 +228,12 @@ dir.create(new_folder_path, showWarnings = FALSE)
 
 
 # Get unique values of NAME_1
-unique_names <- unique(agg_block$NAME_1)
+unique_names <- unique(billing_doc_output$NAME_1)
 
 # Loop through each unique NAME_1 value
 for (name in unique_names) {
   # Subset data frame for current NAME_1 value
-  subset_data <- agg_block[agg_block$NAME_1 == name, ]
+  subset_data <- billing_doc_output[billing_doc_output$NAME_1 == name, ]
   
   # Reorder the columns in final_output
   subset_data <- subset_data[, desired_order]

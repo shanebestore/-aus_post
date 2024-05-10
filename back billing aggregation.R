@@ -1,5 +1,5 @@
 ######## just the custo and description ########
-summary_by_description <- agg_block %>%
+summary_by_description <- billing_doc_output %>%
   filter(!(DESCRIPTION %in% c("AP Parcels Domestic Fuel Surcharge",
                               "AP Security Mgt Charge",
                               "AP Parcels Domestic Fuel Surchg Tax Free",
@@ -16,9 +16,11 @@ summary_by_description <- agg_block %>%
     sum_of_uplift_figure_exgst = sum(uplift_figure_exgst, na.rm = TRUE),
     sum_of_charge_to_custo_exgst = sum(charge_to_custo_exgst, na.rm = TRUE),
     sum_of_FUEL.SURCHARGE.. = sum(FUEL.SURCHARGE.., na.rm = TRUE),
-    sum_of_fuel_surcharge = sum(fuel_surcharge, na.rm = TRUE),
+    sum_of_fuel_surcharge = sum(fuel_surcharge, na.rm = TRUE), 
+    sum_of_fuel_surcharge_uplifted = sum(fuel_surcharge_uplifted, na.rm = TRUE),
     sum_of_SMC.FEE = sum(SMC.FEE, na.rm = TRUE),
     sum_of_sec_mng_chrg = sum(sec_mng_chrg, na.rm = TRUE),
+    sum_of_sec_mng_chrg_uplifted= sum(sec_mng_chrg_uplifted, na.rm = TRUE),
 #    sum_of_OVER.MAX.LIMITS.FEE = sum(OVER.MAX.LIMITS.FEE, na.rm = TRUE),
     sum_of_over_max_limits_fee = sum(over_max_limits_fee, na.rm = TRUE)
   )
@@ -38,7 +40,7 @@ write.csv(summary_by_description, file = full_file_path, row.names = FALSE)
 
 ######## just the description ########
 
-summary_by_description <- agg_block %>%
+summary_by_description <- billing_doc_output %>%
   filter(!(DESCRIPTION %in% c("AP Parcels Domestic Fuel Surcharge",
                               "AP Security Mgt Charge",
                               "AP Parcels Domestic Fuel Surchg Tax Free",
@@ -55,10 +57,12 @@ summary_by_description <- agg_block %>%
     sum_of_uplift_figure_exgst = sum(uplift_figure_exgst, na.rm = TRUE),
     sum_of_charge_to_custo_exgst = sum(charge_to_custo_exgst, na.rm = TRUE),
     sum_of_FUEL.SURCHARGE.. = sum(FUEL.SURCHARGE.., na.rm = TRUE),
-    sum_of_fuel_surcharge = sum(fuel_surcharge, na.rm = TRUE),
+    sum_of_fuel_surcharge = sum(fuel_surcharge, na.rm = TRUE), 
+    sum_of_fuel_surcharge_uplifted = sum(fuel_surcharge_uplifted, na.rm = TRUE),
     sum_of_SMC.FEE = sum(SMC.FEE, na.rm = TRUE),
     sum_of_sec_mng_chrg = sum(sec_mng_chrg, na.rm = TRUE),
-#    sum_of_OVER.MAX.LIMITS.FEE = sum(OVER.MAX.LIMITS.FEE, na.rm = TRUE),
+    sum_of_sec_mng_chrg_uplifted= sum(sec_mng_chrg_uplifted, na.rm = TRUE),
+    #    sum_of_OVER.MAX.LIMITS.FEE = sum(OVER.MAX.LIMITS.FEE, na.rm = TRUE),
     sum_of_over_max_limits_fee = sum(over_max_limits_fee, na.rm = TRUE)
   )
 

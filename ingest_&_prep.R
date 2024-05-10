@@ -21,9 +21,9 @@ library(dplyr)
 
 #1013156007-5729374082957312
 
-#bill = read.csv("billing_docs/1013016084-6214851349184512.csv", head=TRUE, sep=",")  # 01 - 16 feb
+bill = read.csv("billing_docs/1013016084-6214851349184512.csv", head=TRUE, sep=",")  # 01 - 16 feb
 #bill = read.csv("billing_docs/1013048181-6514511150317568.csv", head=TRUE, sep=",")  # 17 - 28 feb
-bill = read.csv("billing_docs/1013085979-5806754721955840.csv", head=TRUE, sep=",")  # 01 - 16 Mar
+#bill = read.csv("billing_docs/1013085979-5806754721955840.csv", head=TRUE, sep=",")  # 01 - 16 Mar
 #bill = read.csv("billing_docs/1013111472-5847093054799872.csv", head=TRUE, sep=",")  # 17 - 31 Mar
 #bill = read.csv("billing_docs/1013156007-5729374082957312.csv", head=TRUE, sep=",")  # 01 - 15 April
 #bill = read.csv("billing_docs/1013168047-5072493127663616.csv", head=TRUE, sep=",")  # 16 - 30 April;
@@ -157,9 +157,9 @@ bill_cut1$uplift <- ifelse(bill_cut1$DESCRIPTION == "APGL NZ Express w/Signature
 
 #### create a col to determine if its GST free ####
 
-# Define a function to apply the logic
+# the NZ here represents all og APGL
 is_gst_free <- function(zone) {
-  ifelse(zone %in% c("NF", "W4", "AAT", "Z1", "Z2", "Z3", "Z4", "Z5", "Z6", "Z7", "Z8", "Z9" ), "Yes", "No")
+  ifelse(zone %in% c("NF", "W4", "AAT", "Z1", "Z2", "Z3", "Z4", "Z5", "Z6", "Z7", "Z8", "Z9", "NZ"), "Yes", "No")
 }
 
 # Apply the function to create the new column
