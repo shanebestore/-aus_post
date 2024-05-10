@@ -326,14 +326,6 @@ calculate_final_charge <- function(charge_value_max_incgst, weight_category_max,
 
 output_d_2$base_charge_incgst <- mapply(calculate_final_charge, output_d_2$charge_value_max_incgst, output_d_2$weight_category_max, output_d_2$max_weight, output_d_2$row_index_max)
 
-#### Base charge for Express Post Parcels (BYO up to 5kg) ####
-# to be tested when I can bring this in
-#output_e <- subset(output_a, service %in% c("EPP_fivekg"))
-
-#output_e$base_charge_incgst <- ifelse(output_e$DESCRIPTION == "Express Post Parcels (BYO up to 5kg)",
-#                                                ex_pp_byo_up_to_5kg,
-#                                                NA)
-
 #### Base charge for eparcel return to sender, Express Post eparcel returns, eParcel Post Return (Reg)  ####
 # Function to subset data based on service and perform operations
 subset_and_operate <- function(data, services, fee) {
@@ -554,11 +546,11 @@ calculate_final_charge <- function(charge_value_max_incgst, weight_category_max,
 
 output_k_2$base_charge_incgst <- mapply(calculate_final_charge, output_k_2$charge_value_max_incgst, output_k_2$weight_category_max, output_k_2$max_weight, output_k_2$row_index_max)
 
-#### the services we are not changing namelyt "APGL NZ Express w/Signature", "On Demand Tonight", "On Demand Afternoon"----
+#### the services we are not changing namely "APGL NZ Express w/Signature", "On Demand Tonight", "On Demand Afternoon"----
 
 
 subset_and_operate <- function(data) {
-  subset_data <- subset(data, DESCRIPTION %in% c("APGL NZ Express w/Signature", "On Demand Tonight", "On Demand Afternoon"))
+  subset_data <- subset(data, DESCRIPTION %in% c("APGL NZ Express w/Signature", "On Demand Tonight", "On Demand Afternoon", "Express Post Parcels (BYO up to 5kg)"))
   if (nrow(subset_data) > 0) {
     subset_data$row_index_max <- NA
     subset_data$col_index_max <- NA

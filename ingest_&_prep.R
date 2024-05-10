@@ -23,9 +23,9 @@ library(dplyr)
 
 #bill = read.csv("billing_docs/1013016084-6214851349184512.csv", head=TRUE, sep=",")  # 01 - 16 feb
 #bill = read.csv("billing_docs/1013048181-6514511150317568.csv", head=TRUE, sep=",")  # 17 - 28 feb
-#bill = read.csv("billing_docs/1013085979-5806754721955840.csv", head=TRUE, sep=",")  # 01 - 16 Mar
+bill = read.csv("billing_docs/1013085979-5806754721955840.csv", head=TRUE, sep=",")  # 01 - 16 Mar
 #bill = read.csv("billing_docs/1013111472-5847093054799872.csv", head=TRUE, sep=",")  # 17 - 31 Mar
-bill = read.csv("billing_docs/1013156007-5729374082957312.csv", head=TRUE, sep=",")  # 01 - 15 April
+#bill = read.csv("billing_docs/1013156007-5729374082957312.csv", head=TRUE, sep=",")  # 01 - 15 April
 #bill = read.csv("billing_docs/1013168047-5072493127663616.csv", head=TRUE, sep=",")  # 16 - 30 April;
 
 # Get the min and max dates the bill covers
@@ -61,14 +61,51 @@ customer_uplift_march_24 = read.csv("reference_data/customer_uplift_march_24.csv
 #custo codes
 estore_custo_codes = read.csv("reference_data/estore_custo_codes.csv", head=TRUE, sep=",")
 
-#colnames(cz_melb_espress) <- sub("^X", "", colnames(cz_melb_espress))
+#### customer code ####
+# Function to extract letters before the first "-"
+extract_letters <- function(text) {
+  split_text <- strsplit(as.character(text), " ")[[1]]
+  return(trimws(split_text[1]))  
+}
+
+# Create a new column in bill to store the corresponding values from DF2
+bill$customer_code <- NA
+
+# Loop through each row in bill
+for (i in 1:nrow(bill)) {
+  # Get the trading name from bill$NAME_1
+  trading_name <- bill$NAME_1[i]
+  
+  # Find the corresponding row index in DF2 where trading_name matches
+  match_index <- which(estore_custo_codes$trading_name == trading_name)
+  
+  # If a match is found, assign the corresponding value from DF2 to bill
+  if (length(match_index) > 0) {
+    bill$customer_code[i] <- estore_custo_codes$eStore_code[match_index]
+  } else {
+    # Handle cases where no match is found
+    # Extract letters before the "-" in bill$NAME_1
+    letters_before_dash <- substr(trading_name, 1, regexpr("-", trading_name) - 1)
+    bill$customer_code[i] <- ifelse(letters_before_dash != "", letters_before_dash, "custo code not found")
+  }
+}
+
+# Apply the extract_letters function to customer_code where necessary
+bill$customer_code2 <- sapply(bill$customer_code, function(code) {
+  if (code == "custo code not found") {
+    extract_letters(bill$NAME_1[i])
+  } else {
+    extract_letters(code)
+  }
+})
+
 
 #### remove the summary lines we do not want ####
 bill_cut1 <- bill[!grepl("charge|surcharge|admin|fuel", bill$DESCRIPTION, ignore.case = TRUE), ]
 #bill_cut1 <- bill
 
 #cutting the dataset down to just the metrics we need for ALL of the basic calculations
-bill_cut1 <-  bill_cut1[,  c("REGION", "RECEIVING.COUNTRY", "CUSTOMER", "NAME_1", "NAME_2", "NAME_3", "DESCRIPTION", "BILLING.DOC", "SERVICE.DATE", "TO.ADDRESS", "CONSIGNMENT.ID", "ARTICLE.ID",   
+bill_cut1 <-  bill_cut1[,  c("REGION", "RECEIVING.COUNTRY", "customer_code", "customer_code2", "CUSTOMER", "NAME_1", "NAME_2", "NAME_3", "DESCRIPTION", "BILLING.DOC", "SERVICE.DATE", "TO.ADDRESS", "CONSIGNMENT.ID", "ARTICLE.ID",   
                             "BILLED.LENGTH", "BILLED.WIDTH", "BILLED.HEIGHT", "CUBIC.WEIGHT", "BILLED.WEIGHT", "ACTUAL.WEIGHT", "CHARGE.ZONE", "FROM.STATE", "AVG..UNIT.PRICE" ,"AMOUNT.INCL.TAX", "AMOUNT.EXCL.TAX", "DECLARED.WEIGHT")] 
 
 # get the lift service as per uplift card. This covers all thats in the description
@@ -116,43 +153,6 @@ bill_cut1$uplift <- ifelse(bill_cut1$DESCRIPTION %in% c("On Demand Tonight", "On
 bill_cut1$uplift <- ifelse(bill_cut1$DESCRIPTION == "APGL NZ Express w/Signature", "APGL", bill_cut1$uplift)
 
 
-#### customer code ####
-# Function to extract letters before the first "-"
-extract_letters <- function(text) {
-  split_text <- strsplit(as.character(text), " ")[[1]]
-  return(trimws(split_text[1]))  
-}
-
-# Create a new column in bill_cut1 to store the corresponding values from DF2
-bill_cut1$customer_code <- NA
-
-# Loop through each row in bill_cut1
-for (i in 1:nrow(bill_cut1)) {
-  # Get the trading name from bill_cut1$NAME_1
-  trading_name <- bill_cut1$NAME_1[i]
-  
-  # Find the corresponding row index in DF2 where trading_name matches
-  match_index <- which(estore_custo_codes$trading_name == trading_name)
-  
-  # If a match is found, assign the corresponding value from DF2 to bill_cut1
-  if (length(match_index) > 0) {
-    bill_cut1$customer_code[i] <- estore_custo_codes$eStore_code[match_index]
-  } else {
-    # Handle cases where no match is found
-    # Extract letters before the "-" in bill_cut1$NAME_1
-    letters_before_dash <- substr(trading_name, 1, regexpr("-", trading_name) - 1)
-    bill_cut1$customer_code[i] <- ifelse(letters_before_dash != "", letters_before_dash, "custo code not found")
-  }
-}
-
-# Apply the extract_letters function to customer_code where necessary
-bill_cut1$customer_code2 <- sapply(bill_cut1$customer_code, function(code) {
-  if (code == "custo code not found") {
-    extract_letters(bill_cut1$NAME_1[i])
-  } else {
-    extract_letters(code)
-  }
-})
 
 
 #### create a col to determine if its GST free ####

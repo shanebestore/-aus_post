@@ -1,5 +1,8 @@
 start_time <- Sys.time()
 # Source the first script
+#clean enviornment
+rm(list = ls())
+
 source("C:/Users/shaneb/Desktop/aus_repo_2/-aus_post/ingest_&_prep.R")
 
 

@@ -7,11 +7,11 @@ names(bill)[names(bill) == "ARTICLE.ID"] <- "article_id"
 names(output_all_services_2)[names(output_all_services_2) == "ARTICLE.ID"] <- "article_id"
 
 # Specify columns to merge from output_all_services_2
-merge_cols <- c("customer_code2", "customer_code", "service", "uplift", "DESCRIPTION", "BILLING.DOC", "article_id", 
+merge_cols <- c( "service", "uplift", "DESCRIPTION", "BILLING.DOC", "article_id", 
                 "base_charge_incgst", "base_charge_exgst", "base_charge_tax", "charge_value_uplift", "uplift_figure_exgst", 
                 "charge_to_custo_exgst", "cubic_weight", "max_weight", "fuel_surcharge", "fuel_gst", "sec_mng_chrg", "sec_mng_gst", 
                 "over_max_limits_fee", "weight_category_max", "warnings", "is_gst_free_zone")
-
+#"customer_code2", "customer_code",
 selected_output_all_services_2 <- output_all_services_2[, merge_cols]
 
 # Merge bill and selected columns from output_all_services_2 by the unique identifier 
@@ -62,9 +62,9 @@ full_file_path <- file.path(output_folder, file_name)
 
 write.csv(billing_doc_output, file = full_file_path, row.names = FALSE)
 
-#### aggregation block ####
-
-#create international_charge_zone here for the time being at least
+#### aggregation block ----
+# this will be used to generate the sums and the ap_post_supply will be taken from here
+#create international_charge_zone
 billing_doc_output$intl_charge_zone <- billing_doc_output$CHARGE.ZONE
 
 # Produce the output for in the right structure this will be the basis for the aggregation and calculation files
@@ -72,7 +72,7 @@ desired_order <- c(
   "customer_code", "NAME_1", "MAILING.STATEMENT.NO.", "ASSIGNMENT.NO." , "SERVICE.DATE" , "DESCRIPTION",
   "BILLING.DATE", "CONSIGNMENT.ID", "article_id", "LODGEMENT.DATE", "ACTUAL.WEIGHT", "ACTUAL.UNIT", "ACTUAL.LENGTH",
   "ACTUAL.WIDTH", "ACTUAL.HEIGHT", "ACTUAL.UNIT.TYPE", 	
-   "DECLARED.UNIT.TYPE", "DECLARED.WEIGHT",	"DECLARED.UNIT",	"DECLARED.LENGTH",	"DECLARED.WIDTH",
+  "DECLARED.UNIT.TYPE", "DECLARED.WEIGHT",	"DECLARED.UNIT",	"DECLARED.LENGTH",	"DECLARED.WIDTH",
   "DECLARED.HEIGHT",	"DECLARED.UNIT.TYPE", "FROM.NAME", 	"FROM.ADDRESS",	"FROM.CITY",	"FROM.STATE",	"FROM.POSTAL.CODE",
  "TO.NAME",	"TO.ADDRESS",	"TO.CITY",	"TO.STATE",	"TO.POSTAL.CODE", "CUST.REF.1",	"CUST.REF.2",	"BILLED.LENGTH", "BILLED.WIDTH",
  "BILLED.HEIGHT", "CUBIC.WEIGHT", "BILLED.WEIGHT", "CHARGE.CODE", "RECEIVING.COUNTRY", "intl_charge_zone", "CHARGE.ZONE", "service", "QTY", "AMOUNT.INCL.TAX", 
