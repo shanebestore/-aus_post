@@ -21,8 +21,8 @@ library(dplyr)
 
 #1013156007-5729374082957312
 
-bill = read.csv("billing_docs/1013016084-6214851349184512.csv", head=TRUE, sep=",")  # 01 - 16 feb
-#bill = read.csv("billing_docs/1013048181-6514511150317568.csv", head=TRUE, sep=",")  # 17 - 28 feb
+#bill = read.csv("billing_docs/1013016084-6214851349184512.csv", head=TRUE, sep=",")  # 01 - 16 feb
+bill = read.csv("billing_docs/1013048181-6514511150317568.csv", head=TRUE, sep=",")  # 17 - 28 feb
 #bill = read.csv("billing_docs/1013085979-5806754721955840.csv", head=TRUE, sep=",")  # 01 - 16 Mar
 #bill = read.csv("billing_docs/1013111472-5847093054799872.csv", head=TRUE, sep=",")  # 17 - 31 Mar
 #bill = read.csv("billing_docs/1013156007-5729374082957312.csv", head=TRUE, sep=",")  # 01 - 15 April
