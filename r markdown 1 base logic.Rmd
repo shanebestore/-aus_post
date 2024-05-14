@@ -15,6 +15,7 @@ ui <- fluidPage(
   titlePanel("Input Form"),
   sidebarLayout(
     sidebarPanel(
+      fileInput("csv_file", "Upload CSV File", accept = ".csv"),
       textInput("fuel_surcharge", "Fuel Surcharge for the month"),
       textInput("force_majeure_fee", "Force Majeure Fee"),
       textInput("peak_fee", "Peak Fee"),
@@ -29,12 +30,16 @@ ui <- fluidPage(
 
 # Define server logic
 server <- function(input, output) {
+  # Increase maximum file size limit to 1 GB
+  options(shiny.maxRequestSize = 1024*1024*1024) # 1 GB in bytes
+
   # Define a reactive expression to store user inputs
   user_data <- reactive({
     list(
       fuel_surcharge = as.numeric(input$fuel_surcharge),
       force_majeure_fee = as.numeric(input$force_majeure_fee),
-      peak_fee = as.numeric(input$peak_fee)
+      peak_fee = as.numeric(input$peak_fee),
+      csv_file = input$csv_file
     )
   })
 
@@ -42,9 +47,9 @@ server <- function(input, output) {
   observeEvent(input$submit, {
     user_inputs <- user_data()
     
-    if (!is.null(user_inputs$fuel_surcharge) && !is.null(user_inputs$force_majeure_fee) && !is.null(user_inputs$peak_fee)) {
+    if (!is.null(user_inputs$fuel_surcharge) && !is.null(user_inputs$force_majeure_fee) && !is.null(user_inputs$peak_fee) && !is.null(user_inputs$csv_file)) {
       # Execute your custom script here
-      bill <- read.csv("billing_docs/1013048181-6514511150317568.csv", head=TRUE, sep=",")  # 17 - 28 feb
+      bill <- read.csv(user_inputs$csv_file$datapath, head=TRUE, sep=",")  # Read uploaded CSV file
       sum_qty <- sum(bill$QTY)
       result <- sum_qty * user_inputs$fuel_surcharge
       print(result)

@@ -8,6 +8,7 @@ runtime: shiny
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
 library(shiny)
 
 # Define UI
@@ -15,6 +16,7 @@ ui <- fluidPage(
   titlePanel("Input Form"),
   sidebarLayout(
     sidebarPanel(
+      fileInput("csv_file", "Upload CSV File", accept = ".csv"),
       textInput("fuel_surcharge", "Fuel Surcharge for the month"),
       textInput("force_majeure_fee", "Force Majeure Fee"),
       textInput("peak_fee", "Peak Fee"),
@@ -29,12 +31,16 @@ ui <- fluidPage(
 
 # Define server logic
 server <- function(input, output) {
+  # Increase maximum file size limit to 1 GB
+  options(shiny.maxRequestSize = 1024*1024*1024) # 1 GB in bytes
+
   # Define a reactive expression to store user inputs
   user_data <- reactive({
     list(
       fuel_surcharge = as.numeric(input$fuel_surcharge),
       force_majeure_fee = as.numeric(input$force_majeure_fee),
-      peak_fee = as.numeric(input$peak_fee)
+      peak_fee = as.numeric(input$peak_fee),
+      csv_file = input$csv_file
     )
   })
 
@@ -42,22 +48,9 @@ server <- function(input, output) {
   observeEvent(input$submit, {
     user_inputs <- user_data()
     
-    if (!is.null(user_inputs$fuel_surcharge) && !is.null(user_inputs$force_majeure_fee) && !is.null(user_inputs$peak_fee)) {
+    if (!is.null(user_inputs$fuel_surcharge) && !is.null(user_inputs$force_majeure_fee) && !is.null(user_inputs$peak_fee) && !is.null(user_inputs$csv_file)) {
       # Execute your custom script here
-
-##### Bring in the billng doc #####
-
-#bill = read.csv("ESTORELOGISTICSPTYLTD_0006794750_20240303_1013048181.csv", head=TRUE, sep=",")
-#bill = read.csv("ESTORELOGISTICSPTYLTD_0006794750_20240219_1013016084.csv", head=TRUE, sep=",")
-
-#1013156007-5729374082957312
-
-#bill = read.csv("billing_docs/1013016084-6214851349184512.csv", head=TRUE, sep=",")  # 01 - 16 feb
-bill = read.csv("billing_docs/1013048181-6514511150317568.csv", head=TRUE, sep=",")  # 17 - 28 feb
-#bill = read.csv("billing_docs/1013085979-5806754721955840.csv", head=TRUE, sep=",")  # 01 - 16 Mar
-#bill = read.csv("billing_docs/1013111472-5847093054799872.csv", head=TRUE, sep=",")  # 17 - 31 Mar
-#bill = read.csv("billing_docs/1013156007-5729374082957312.csv", head=TRUE, sep=",")  # 01 - 15 April
-#bill = read.csv("billing_docs/1013168047-5072493127663616.csv", head=TRUE, sep=",")  # 16 - 30 April;
+      bill <- read.csv(user_inputs$csv_file$datapath, head=TRUE, sep=",")  # Read uploaded CSV file
 
 # Get the min and max dates the bill covers
 bill$BILLING.DATE <- as.Date(as.character(bill$BILLING.DATE), format = "%Y%m%d")
@@ -1317,8 +1310,6 @@ file_name <- paste0("summary_by_description_", predefined_text, ".csv")
 full_file_path <- file.path(output_folder, file_name)
 
 write.csv(summary_by_description, file = full_file_path, row.names = FALSE)
-
-
 
 
 
