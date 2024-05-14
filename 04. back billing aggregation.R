@@ -25,7 +25,6 @@ summary_by_description <- billing_doc_output %>%
     sum_of_over_max_limits_fee = sum(over_max_limits_fee, na.rm = TRUE)
   )
 
-print(summary_by_description)
 
 output_folder <- file.path(getwd(), paste0("output_billing_dates_", predefined_text))
 if (!file.exists(output_folder)) {
@@ -65,9 +64,6 @@ summary_by_description <- billing_doc_output %>%
     #    sum_of_OVER.MAX.LIMITS.FEE = sum(OVER.MAX.LIMITS.FEE, na.rm = TRUE),
     sum_of_over_max_limits_fee = sum(over_max_limits_fee, na.rm = TRUE)
   )
-
-print(summary_by_description)
-
 
 
 output_folder <- file.path(getwd(), paste0("output_billing_dates_", predefined_text))

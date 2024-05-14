@@ -33,9 +33,7 @@ bill$BILLING.DATE <- as.Date(as.character(bill$BILLING.DATE), format = "%Y%m%d")
 min_date <- min(bill$BILLING.DATE, na.rm = TRUE)
 max_date <- max(bill$BILLING.DATE, na.rm = TRUE)
 
-
 predefined_text <- paste( format(min_date, "%Y-%m-%d"), "to", format(max_date, "%Y-%m-%d"))
-
 
 # pre feb base rates. Left in for pulling comparison calcs
 #cz_pre_feb_eparcel_regular_ex_mel = read.csv("reference_data/cz_pre_feb_eparcel_regular_ex_mel.csv", head=TRUE, row.names = 1,  sep=",")
@@ -61,7 +59,7 @@ customer_uplift_march_24 = read.csv("reference_data/customer_uplift_march_24.csv
 #custo codes
 estore_custo_codes = read.csv("reference_data/estore_custo_codes.csv", head=TRUE, sep=",")
 
-#### customer code ####
+#### customer code ----
 # Function to extract letters before the first "-"
 extract_letters <- function(text) {
   split_text <- strsplit(as.character(text), " ")[[1]]
@@ -151,8 +149,6 @@ bill_cut1$uplift <- ifelse(bill_cut1$DESCRIPTION == "Express Post Parcels (BYO u
 # Additional Conditions (no new rates for these)
 bill_cut1$uplift <- ifelse(bill_cut1$DESCRIPTION %in% c("On Demand Tonight", "On Demand Afternoon"), "OnDemand", bill_cut1$uplift)
 bill_cut1$uplift <- ifelse(bill_cut1$DESCRIPTION == "APGL NZ Express w/Signature", "APGL", bill_cut1$uplift)
-
-
 
 
 #### create a col to determine if its GST free ####

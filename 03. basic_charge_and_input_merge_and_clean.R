@@ -1,6 +1,6 @@
 #### Generate billing doc output file (line by line comparison) ####
 # join the selected columns onto the billing doc in the correct places
-# this creates the billing_doc_output which is a just the original output withe the new columns added
+# this creates the billing_doc_output which is a just the original output withe the new columns added. Great for looking at individual lines
 
 # rename the article_id
 names(bill)[names(bill) == "ARTICLE.ID"] <- "article_id"
@@ -54,7 +54,8 @@ billing_doc_output <- discrepancy(billing_doc_output)
   "TELEPHONE", "FAX.NUMBER", "MAILING.STATEMENT.NO.", "ASSIGNMENT.NO.", "SERVICE.DATE", "WORK.CENTRE", "WORK.CENTRE.NAME", "CUSTOMER.REF", "CUSTOMER.REFDOC", 
   "ITEM", "MATERIAL", "QTY", "AVG..UNIT.PRICE", "AMOUNT.INCL.TAX", "base_charge_incgst", "base_charge_exgst", "discrepancy", "base_charge_tax", "charge_value_uplift", 
   "uplift_figure_exgst", "charge_to_custo_exgst", "warnings", "TAX.CODE", "TAX.AMOUNT", "AMOUNT.EXCL.TAX", "INVOICE.TOTAL", "TOTAL.QTY", "BILLING.CURRENCY", 
-  "EXCHANGE.RATE", "LOCAL.CURRENCY", "FUEL.SURCHARGE..", "FUEL.SURCHARGE.DISC", "FUEL.GST", "fuel_surcharge","fuel_surcharge_uplifted", "fuel_gst","fuel_surchrg_uplift_gst", "sec_mng_chrg", "sec_mng_chrg_uplifted", "sec_mng_gst", "sec_mng_uplifted_gst",
+  "EXCHANGE.RATE", "LOCAL.CURRENCY", "FUEL.SURCHARGE..", "FUEL.SURCHARGE.DISC", "FUEL.GST", "fuel_surcharge","fuel_surcharge_uplifted", "fuel_gst","fuel_surchrg_uplift_gst", 
+  "sec_mng_chrg", "sec_mng_chrg_uplifted", "sec_mng_gst", "sec_mng_uplifted_gst",
   "over_max_limits_fee", "MHS.FEE", "MHS.DISCOUNT", "MHS.GST", "SMC.FEE", "SMC.DISCOUNT", "SMC.GST", "INTL.SURCHARGE", "INTL.SURCHARGE.MANIFEST", "INVOICE.NO", 
   "BILLING.DATE", "SALES.ORDER", "SALES.ORDER.ITEM", "PAYER", "PAYER.NAME", "CONSIGNMENT.ID", "LODGEMENT.DATE", "ACTUAL.WEIGHT", "ACTUAL.UNIT", "ACTUAL.LENGTH", 
   "ACTUAL.WIDTH", "ACTUAL.HEIGHT", "ACTUAL.UNIT.TYPE", "DECLARED.WEIGHT", "DECLARED.UNIT", "DECLARED.LENGTH", "DECLARED.WIDTH", "DECLARED.HEIGHT", 
@@ -68,6 +69,8 @@ billing_doc_output <- discrepancy(billing_doc_output)
 
 # Reorder the columns in final_output
 billing_doc_output <- billing_doc_output [, desired_order]
+
+
 
 
 #### sum for the aggregation lines ----
@@ -85,9 +88,7 @@ billing_doc_output <- left_join(billing_doc_output, fuel_surcharge_per_billing_d
 billing_doc_output <- billing_doc_output %>%
   mutate(base_charge_exgst = ifelse(DESCRIPTION == "AP Parcels Domestic Fuel Surcharge",
                                     total_fuel_surcharge,
-                                    base_charge_exgst)) %>%
-  select(-total_fuel_surcharge)
-
+                                    base_charge_exgst)) %>% select(-total_fuel_surcharge)
 
 
 #### sum the fuel_surcharg tax free ---
@@ -101,8 +102,7 @@ billing_doc_output <- left_join(billing_doc_output, fuel_surcharge_per_billing_d
 billing_doc_output <- billing_doc_output %>%
   mutate(base_charge_exgst = ifelse(DESCRIPTION == "AP Parcels Domestic Fuel Surchg Tax Free",
                                     total_fuel_surcharge,
-                                    base_charge_exgst)) %>%
-  select(-total_fuel_surcharge)
+                                    base_charge_exgst)) %>% select(-total_fuel_surcharge)
 
 #### sum the security management fee ----
 sec_mng_chrg_per_billing_doc <- billing_doc_output %>%
@@ -115,8 +115,7 @@ billing_doc_output <- left_join(billing_doc_output, sec_mng_chrg_per_billing_doc
 billing_doc_output <- billing_doc_output %>%
   mutate(base_charge_exgst = ifelse(DESCRIPTION == "AP Security Mgt Charge",
                                     total_sec_mng_chrg,
-                                    base_charge_exgst)) %>%
-  select(-total_sec_mng_chrg)
+                                    base_charge_exgst)) %>% select(-total_sec_mng_chrg)
 
 #### sum the security AP Security Mgt Charge Tax Free ----
 
@@ -130,8 +129,7 @@ billing_doc_output <- left_join(billing_doc_output, sec_mng_chrg_per_billing_doc
 billing_doc_output <- billing_doc_output %>%
   mutate(base_charge_exgst = ifelse(DESCRIPTION == "AP Security Mgt Charge Tax Free",
                                     total_sec_mng_chrg,
-                                    base_charge_exgst)) %>%
-  select(-total_sec_mng_chrg)
+                                    base_charge_exgst)) %>% select(-total_sec_mng_chrg)
 
 #### bring across the services that we are not touching ----
 billing_doc_output$base_charge_incgst <- ifelse(billing_doc_output$DESCRIPTION %in% c(
@@ -160,6 +158,8 @@ billing_doc_output$base_charge_exgst <- ifelse(billing_doc_output$DESCRIPTION %i
   billing_doc_output$AMOUNT.EXCL.TAX,
   billing_doc_output$base_charge_exgst)
 
+
+
 # quick fix for charge to customer. Will have to revise this down the line
 #billing_doc_output$avg_unit_price_charge_to_custo_ex_gst <- billing_doc_output$QTY * billing_doc_output$charge_to_custo_exgst
 max_charge <- pmax(billing_doc_output$charge_to_custo_exgst, billing_doc_output$base_charge_exgst, na.rm = TRUE)
@@ -185,6 +185,37 @@ write.csv(billing_doc_output, file = full_file_path, row.names = FALSE)
 #create international_charge_zone
 billing_doc_output$intl_charge_zone <- billing_doc_output$CHARGE.ZONE
 
+#Restructure define the services for the outputs
+billing_doc_output$Service[billing_doc_output$DESCRIPTION == "AP International Line Haul Surcharge"] <- "eParcel International Line Haul Surcharge"
+billing_doc_output$Service[billing_doc_output$DESCRIPTION == "AP Parcels Domestic Fuel Surcharge" |
+                             billing_doc_output$DESCRIPTION == "AP Parcels Domestic Fuel Surchg Tax Free"] <- "eParcel Regular"
+billing_doc_output$Service[billing_doc_output$DESCRIPTION == "AP Security Mgt Charge" |
+                             billing_doc_output$DESCRIPTION == "AP Security Mgt Charge Tax Free"] <- "eParcel Express"
+billing_doc_output$Service[billing_doc_output$DESCRIPTION == "Express Post Parcels (BYO up to 5kg)"] <- "eParcel Express"
+billing_doc_output$Service[billing_doc_output$DESCRIPTION == "Local Pickup and Delivery Services" |
+                             billing_doc_output$DESCRIPTION == "Lodgement Management Fee" |
+                             billing_doc_output$DESCRIPTION == "More to Pay"] <- "eParcel Regular Returns"
+billing_doc_output$Service[billing_doc_output$DESCRIPTION == "Over Maximum Limits Fee"] <- "Additional Charges"
+billing_doc_output$Service[billing_doc_output$DESCRIPTION == "APGL NZ Express w/Signature"] <- "APGL NZ Express"
+billing_doc_output$Service[grep("demand", billing_doc_output$DESCRIPTION, ignore.case = TRUE)] <- "StarTrack OnDemand"
+
+billing_doc_output$Service[billing_doc_output$DESCRIPTION == "Duties and Taxes Admin Fee (DDP)" |
+                             billing_doc_output$DESCRIPTION == "Delivered Duty Paid"] <- billing_doc_output$DESCRIPTION[billing_doc_output$DESCRIPTION %in% c("Duties and Taxes Admin Fee (DDP)", "Delivered Duty Paid")]
+
+billing_doc_output$Service[billing_doc_output$DESCRIPTION == "EPARCEL WINE STD"] <- "eParcel Wine"
+billing_doc_output$Service[billing_doc_output$DESCRIPTION == "eParcel Call For Return" |
+                             billing_doc_output$DESCRIPTION == "eParcel Return To Sender" |
+                             billing_doc_output$DESCRIPTION == "eParcel Post Return"] <- "eParcel Regular Returns"
+
+billing_doc_output$Service[billing_doc_output$DESCRIPTION == "STC Parcels Domestic Fuel Surcharge"] <- "OnDemand"
+
+billing_doc_output$Service[billing_doc_output$DESCRIPTION == "Parcel Post with Signature"] <- "eParcel Regular"
+billing_doc_output$Service[billing_doc_output$DESCRIPTION == "Express Post with Signature"] <- "eParcel Express"
+
+billing_doc_output$Service[billing_doc_output$DESCRIPTION %in% c("PACK AND TRACK INTERNATIONAL", "Express Courier International (eParcel)", "International Returns AIR")] <- "eParcel International"
+
+
+
 # Produce the output for in the right structure this will be the basis for the aggregation and calculation files
 desired_order <- c(
   "customer_code", "NAME_1", "MAILING.STATEMENT.NO.", "ASSIGNMENT.NO." , "SERVICE.DATE" , "DESCRIPTION",
@@ -193,7 +224,7 @@ desired_order <- c(
   "DECLARED.UNIT.TYPE", "DECLARED.WEIGHT",	"DECLARED.UNIT",	"DECLARED.LENGTH",	"DECLARED.WIDTH",
   "DECLARED.HEIGHT",	"DECLARED.UNIT.TYPE", "FROM.NAME", 	"FROM.ADDRESS",	"FROM.CITY",	"FROM.STATE",	"FROM.POSTAL.CODE",
  "TO.NAME",	"TO.ADDRESS",	"TO.CITY",	"TO.STATE",	"TO.POSTAL.CODE", "CUST.REF.1",	"CUST.REF.2",	"BILLED.LENGTH", "BILLED.WIDTH",
- "BILLED.HEIGHT", "CUBIC.WEIGHT", "BILLED.WEIGHT", "CHARGE.CODE", "RECEIVING.COUNTRY", "intl_charge_zone", "CHARGE.ZONE", "service", "QTY", "AMOUNT.INCL.TAX", 
+ "BILLED.HEIGHT", "CUBIC.WEIGHT", "BILLED.WEIGHT", "CHARGE.CODE", "RECEIVING.COUNTRY", "intl_charge_zone", "CHARGE.ZONE", "Service", "QTY", "AMOUNT.INCL.TAX", 
  "AMOUNT.EXCL.TAX", "base_charge_incgst", "base_charge_exgst", "uplift_figure_exgst", "charge_to_custo_exgst", "fuel_surcharge", "FUEL.SURCHARGE..", 
  "SMC.FEE", "sec_mng_chrg", "over_max_limits_fee", "BILLING.DOC", "is_gst_free_zone"#, "OVER.MAX.LIMITS.FEE"
 )
@@ -209,7 +240,7 @@ desired_order <- c(
   "ACTUAL.WIDTH", "ACTUAL.HEIGHT", "ACTUAL.UNIT.TYPE", "DECLARED.WEIGHT",	"DECLARED.UNIT",	"DECLARED.LENGTH",	"DECLARED.WIDTH",
   "DECLARED.HEIGHT",	"DECLARED.UNIT.TYPE", "FROM.NAME", 	"FROM.ADDRESS",	"FROM.CITY",	"FROM.STATE",	"FROM.POSTAL.CODE",
   "TO.NAME",	"TO.ADDRESS",	"TO.CITY",	"TO.STATE",	"TO.POSTAL.CODE", "CUST.REF.1",	"CUST.REF.2",	"BILLED.LENGTH", "BILLED.WIDTH",
-  "BILLED.HEIGHT", "CUBIC.WEIGHT", "BILLED.WEIGHT", "CHARGE.CODE", "intl_charge_zone", "RECEIVING.COUNTRY", "CHARGE.ZONE", "service", "QTY",
+  "BILLED.HEIGHT", "CUBIC.WEIGHT", "BILLED.WEIGHT", "CHARGE.CODE", "intl_charge_zone", "RECEIVING.COUNTRY", "CHARGE.ZONE", "Service", "QTY",
   "avg_unit_price_charge_to_custo_ex_gst", "charge_to_custo_exgst")
 
 # Reorder the columns in final_output.
@@ -217,12 +248,11 @@ desired_order <- c(
 ap_post_supply <- billing_doc_output [, desired_order]
 
 
-
 # Create a new folder in the specified directory
 folder_name <- paste0("ap_post_supply_", predefined_text, ".csv")
 # Replace invalid characters in folder name
 clean_folder_name <- gsub("[^A-Za-z0-9._-]", "_", folder_name)
-new_folder_path <- file.path("C:/Users/shaneb/Desktop/aus_repo_2/-aus_post", clean_folder_name)
+new_folder_path <- file.path(output_folder, clean_folder_name)
 dir.create(new_folder_path, showWarnings = FALSE)
 
 
@@ -256,14 +286,9 @@ if (!file.exists(output_folder)) {
   dir.create(output_folder, recursive = TRUE)
 }
 
-file_name <- paste0("ap_post_supply_consolidated", predefined_text, ".csv")
+file_name <- paste0("ap_post_supply_consolidated_", predefined_text, ".csv")
 full_file_path <- file.path(output_folder, file_name)
 
 write.csv(ap_post_supply, file = full_file_path, row.names = FALSE)
-
-
-
-
-
 
 

@@ -4,7 +4,6 @@
 # Changing name so  cleaniness purposes
 bill_cut_a <-  bill_cut1
 
-
 #### Cubic size ####
 
 factor <- 250  # Change this to your desired factor
@@ -12,7 +11,6 @@ cubic_size <- bill_cut_a$BILLED.HEIGHT * bill_cut_a$BILLED.LENGTH * bill_cut_a$B
 bill_cut_a$cubic_size <- cubic_size
 bill_cut_a$cubic_weight <- cubic_size * factor
 
-#ex_pp_byo_up_to_5kg <-'Express Post Parcels (BYO up to 5kg)'
 bill_cut_a <- mutate(bill_cut_a, 
                      max_weight = ifelse(service == 'International', 
                                          ifelse(BILLED.WEIGHT == 0, DECLARED.WEIGHT, BILLED.WEIGHT),
@@ -24,18 +22,16 @@ bill_cut_a <- mutate(bill_cut_a,
 #### Declare the charges ####
 #fuel charge_ex_gst has to be calculated from the exgst charge value
 gst <- 0.1
-fuel_surcharge_pct <- 0.097
+#fuel_surcharge_pct <- (as.numeric(input$fuel_surcharge)/100)  #### 1/1 of uder inputs
+fuel_surcharge_pct <- 0.097  # this has to be changed manually
 sec_mng_chrg_pct <- 0.0435
 ep_return_to_sender_fee <- 12.85 #same for both express and standard
 exp_eparcel_returns_fee <- 28.45 
 reg_eparcel_returns_fee <- 12.43
 over_max_limits_fee <-100
 
-
-
 #### over max limites fee
 bill_cut_a$over_max_limits_fee <- ifelse(bill_cut_a$service != 'International' & (bill_cut_a$ACTUAL.WEIGHT > 22 | bill_cut_a$BILLED.LENGTH > 105 | bill_cut_a$cubic_size > 0.25), 100, NA)
-
 
 #### Classifying weights ####
 cz_max_weight <- bill_cut_a$max_weight
@@ -141,7 +137,7 @@ for (i in 1:nrow(bill_cut_a)) {
 
 output_a <- cbind(bill_cut_a, weight_category_max)
 
-#### Calculate the base charge ####
+#### Calculate the base charges from the rat card ####
 #### Base charge for Regular.VIC ####
 
 # cut the dataset down to correct uplift service
@@ -350,8 +346,6 @@ output_g <- subset_and_operate(output_a, "exp_eparcel_returns", exp_eparcel_retu
 # eParcel Post Return (Reg)
 output_h <- subset_and_operate(output_a, c("reg_eparcel_returns", "reg_ep_call_for_return"), reg_eparcel_returns_fee)
 
-
-
 #### base charge for eparcel_wine.VIC ####
 
 # cut the dataset down to correct uplift service
@@ -412,9 +406,7 @@ row_index_max <- unlist(lapply(row_name_max, function(row_name_max) {
   }
 }))
 
-
 output_j_2 <-cbind(output_j1, (cbind(row_index_max, col_index_max)))
-
 
 # query new base charge rate 
 # Function to extract values from charge zone dataset based on indices
@@ -465,17 +457,9 @@ extract_charge_value_max_incgst <- function(row_index_max, col_index_max) {
 
 output_l_2$charge_value_max_incgst <- mapply(extract_charge_value_max_incgst, output_l_2$row_index_max, output_l_2$col_index_max)
 
-#sapply(output_l_2, class)
 
-# Function to calculate charge based on charge_value_max_incgst and Per_Kg_#. Also does the calc if  weight_category_max == "X2.01kg_to_20kg"
-#calculate_final_charge <- function(charge_value_max_incgst, weight_category_max, max_weight, row_index_max) {
-#  if (weight_category_max == "X2.01kg_to_20kg") {
-#    per_kg_value <- cz_post_feb_eparcel_international_standard[row_index_max, "Per_Kg_2"]
-#   return(charge_value_max_incgst + (per_kg_value * (max_weight)))
-#  } else {
-#    return(charge_value_max_incgst)  
-#  }
-#}
+
+# Function to calculate charge based on charge_value_max_incgst and Per_Kg_#. 
 
 calculate_final_charge <- function(charge_value_max_incgst, weight_category_max, max_weight, row_index_max) {
   
@@ -522,7 +506,6 @@ row_index_max <- unlist(lapply(row_name_max, function(row_name_max) {
 }))
 
 output_k_2 <-cbind(output_k1, (cbind(row_index_max, col_index_max)))
-#sapply(output_k_2, class)
 
 # query new base charge rate 
 # Function to extract values from charge zone dataset based on indices
@@ -566,10 +549,6 @@ subset_and_operate <- function(data) {
 output_m <- subset_and_operate(output_a)
 
 
-
-
-
-
 #### combine all DFs together ######
 output_all_services  <- rbind(output_a_2, output_b_2, output_c_2, output_d_2, output_f, output_g, output_h, output_i_2, output_j_2, output_l_2, output_k_2, output_m)
 
@@ -596,7 +575,6 @@ output_all_services$base_charge_exgst <- ifelse(output_all_services$is_gst_free_
 output_all_services$base_charge_tax <- output_all_services$base_charge_incgst - output_all_services$base_charge_exgst 
 
 
-# calculate fuel surcharge based on ex gst
 # Calculate fuel surcharge only for non-International entries
 output_all_services$fuel_surcharge <- ifelse(!(output_all_services$uplift %in% c("International", "APGL", "OnDemand")),
                                              output_all_services$base_charge_exgst * fuel_surcharge_pct,

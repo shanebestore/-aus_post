@@ -6,7 +6,6 @@ start_time <- Sys.time()
 
 source("C:/Users/shaneb/Desktop/aus_repo_2/-aus_post/ingest_&_prep.R")
 
-
 # Run the second script
 source("C:/Users/shaneb/Desktop/aus_repo_2/-aus_post/basic_charges_combined.R")
 
