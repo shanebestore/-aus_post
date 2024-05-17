@@ -1,3 +1,4 @@
+###### Section 3. Merging new charges with AP invoice ####
 #### Generate billing doc output file (line by line comparison) ####
 # join the selected columns onto the billing doc in the correct places
 # this creates the billing_doc_output which is a just the original output withe the new columns added. Great for looking at individual lines
@@ -186,34 +187,62 @@ write.csv(billing_doc_output, file = full_file_path, row.names = FALSE)
 billing_doc_output$intl_charge_zone <- billing_doc_output$CHARGE.ZONE
 
 #Restructure define the services for the outputs
-billing_doc_output$Service[billing_doc_output$DESCRIPTION == "AP International Line Haul Surcharge"] <- "eParcel International Line Haul Surcharge"
-billing_doc_output$Service[billing_doc_output$DESCRIPTION == "AP Parcels Domestic Fuel Surcharge" |
-                             billing_doc_output$DESCRIPTION == "AP Parcels Domestic Fuel Surchg Tax Free"] <- "eParcel Regular"
-billing_doc_output$Service[billing_doc_output$DESCRIPTION == "AP Security Mgt Charge" |
-                             billing_doc_output$DESCRIPTION == "AP Security Mgt Charge Tax Free"] <- "eParcel Express"
-billing_doc_output$Service[billing_doc_output$DESCRIPTION == "Express Post Parcels (BYO up to 5kg)"] <- "eParcel Express"
-billing_doc_output$Service[billing_doc_output$DESCRIPTION == "Local Pickup and Delivery Services" |
+# Restructuring to define the services for the outputs
+billing_doc_output$Service <- ""
+
+# Restructuring to define the services for the outputs
+billing_doc_output$Service <- ""
+
+# Mapping descriptions to services
+billing_doc_output$Service[billing_doc_output$DESCRIPTION == "Delivered Duty Paid" |
+                             billing_doc_output$DESCRIPTION == "Over Maximum Limits Fee"]               <- "Additional Charges"
+billing_doc_output$Service[billing_doc_output$DESCRIPTION == "Duties and Taxes Admin Fee (DDP)"]        <- "Add'l Charges - DDP"
+billing_doc_output$Service[billing_doc_output$DESCRIPTION == "APGL NZ Express w/Signature"]             <- "APGL NZ Express"
+billing_doc_output$Service[billing_doc_output$DESCRIPTION == "Imprint Large Charge Letters Regular" |
+                             billing_doc_output$DESCRIPTION == "Imprint Large Charge Letters Priority" |
+                             billing_doc_output$DESCRIPTION == "Imprint Small Charge Letters Regular"]  <- "ELMS"
+billing_doc_output$Service[billing_doc_output$DESCRIPTION == "Express Post with Signature"|
+                             billing_doc_output$DESCRIPTION == "AP Security Mgt Charge" |
+                             billing_doc_output$DESCRIPTION == "AP Security Mgt Charge Tax Free"|
+                             billing_doc_output$DESCRIPTION == "Express Post Parcels (BYO up to 5kg)"]  <- "eParcel Express"
+billing_doc_output$Service[billing_doc_output$DESCRIPTION == "Express Post eparcel returns" ]           <- "eParcel Express Returns"
+billing_doc_output$Service[billing_doc_output$DESCRIPTION == "PACK AND TRACK INTERNATIONAL"|
+                             billing_doc_output$DESCRIPTION == "Express Courier International (eParcel)"] <- "eParcel International"
+billing_doc_output$Service[billing_doc_output$DESCRIPTION == "AP International Line Haul Surcharge"]    <- "eParcel International Line Haul Surcharge"
+billing_doc_output$Service[billing_doc_output$DESCRIPTION == "International Returns Express"|
+                             billing_doc_output$DESCRIPTION == "International  Returns AIRs"]           <- "eParcel International Returns"  # check here for typo
+
+billing_doc_output$Service[billing_doc_output$DESCRIPTION == "Parcel Post with Signature"|
+                             billing_doc_output$DESCRIPTION == "AP Parcels Domestic Fuel Surcharge" |
+                             billing_doc_output$DESCRIPTION == "AP Parcels Domestic Fuel Surchg Tax Free"|
+                             billing_doc_output$DESCRIPTION == "AP Manual Handling Surcharge"|
+                             billing_doc_output$DESCRIPTION == "Weekend & Public Holiday Collections"|
+                             billing_doc_output$DESCRIPTION == "eParcel"|
+                             billing_doc_output$DESCRIPTION == "Underpaid Parcels Charges"|
+                             billing_doc_output$DESCRIPTION == "AP Manual Handling Surcharge Tax Free"] <- "eParcel Regular"
+billing_doc_output$Service[billing_doc_output$DESCRIPTION == "eParcel Return To Sender" |
+                             billing_doc_output$DESCRIPTION == "eParcel Post Return" |
+                             billing_doc_output$DESCRIPTION == "Local Pickup and Delivery Services"|
+                             billing_doc_output$DESCRIPTION == "Return Paid Parcels Local"|
+                             billing_doc_output$DESCRIPTION == "eParcel Call For Return"|
                              billing_doc_output$DESCRIPTION == "Lodgement Management Fee" |
-                             billing_doc_output$DESCRIPTION == "More to Pay"] <- "eParcel Regular Returns"
-billing_doc_output$Service[billing_doc_output$DESCRIPTION == "Over Maximum Limits Fee"] <- "Additional Charges"
-billing_doc_output$Service[billing_doc_output$DESCRIPTION == "APGL NZ Express w/Signature"] <- "APGL NZ Express"
-billing_doc_output$Service[grep("demand", billing_doc_output$DESCRIPTION, ignore.case = TRUE)] <- "StarTrack OnDemand"
-
-billing_doc_output$Service[billing_doc_output$DESCRIPTION == "Duties and Taxes Admin Fee (DDP)" |
-                             billing_doc_output$DESCRIPTION == "Delivered Duty Paid"] <- billing_doc_output$DESCRIPTION[billing_doc_output$DESCRIPTION %in% c("Duties and Taxes Admin Fee (DDP)", "Delivered Duty Paid")]
-
+                             billing_doc_output$DESCRIPTION == "More to Pay" |
+                             billing_doc_output$DESCRIPTION == "Unmanifest Article" |
+                             billing_doc_output$DESCRIPTION == "Return To Sender Parcels" ]             <- "eParcel Regular Returns"
 billing_doc_output$Service[billing_doc_output$DESCRIPTION == "EPARCEL WINE STD"] <- "eParcel Wine"
-billing_doc_output$Service[billing_doc_output$DESCRIPTION == "eParcel Call For Return" |
-                             billing_doc_output$DESCRIPTION == "eParcel Return To Sender" |
-                             billing_doc_output$DESCRIPTION == "eParcel Post Return"] <- "eParcel Regular Returns"
+billing_doc_output$Service[billing_doc_output$DESCRIPTION == "On Demand Return to Sender" |
+                             billing_doc_output$DESCRIPTION == "STC Parcels Domestic Fuel Surcharge" |
+                             billing_doc_output$DESCRIPTION == "On Demand Afternoon" |
+                             billing_doc_output$DESCRIPTION == "On Demand Tonight" |
+                             billing_doc_output$DESCRIPTION == "STC Sundry" |
+                             billing_doc_output$DESCRIPTION == "STC EMS"]                               <- "StarTrack OnDemand"
 
-billing_doc_output$Service[billing_doc_output$DESCRIPTION == "STC Parcels Domestic Fuel Surcharge"] <- "OnDemand"
 
-billing_doc_output$Service[billing_doc_output$DESCRIPTION == "Parcel Post with Signature"] <- "eParcel Regular"
-billing_doc_output$Service[billing_doc_output$DESCRIPTION == "Express Post with Signature"] <- "eParcel Express"
 
-billing_doc_output$Service[billing_doc_output$DESCRIPTION %in% c("PACK AND TRACK INTERNATIONAL", "Express Courier International (eParcel)", "International Returns AIR")] <- "eParcel International"
 
+
+# Remove rows where DESCRIPTION is blank
+billing_doc_output <- billing_doc_output[!is.na(billing_doc_output$DESCRIPTION) & billing_doc_output$DESCRIPTION != "", ]
 
 
 # Produce the output for in the right structure this will be the basis for the aggregation and calculation files
@@ -247,6 +276,14 @@ desired_order <- c(
 # this is needed for the consoladated 
 ap_post_supply <- billing_doc_output [, desired_order]
 
+# new column names as per desired output
+new_col_names <- c("Code", "NAME_1", "MAILING STATEMENT NO.", "ASSIGNMENT NO.", "SERVICE DATE", "DESCRIPTION", "BILLING DATE", "CONSIGNMENT ID", 
+                   "ARTICLE ID", "LODGEMENT DATE", "ACTUAL WEIGHT", "ACTUAL UNIT", "ACTUAL LENGTH", "ACTUAL WIDTH", "ACTUAL HEIGHT", "ACTUAL UNIT TYPE", 
+                   "DECLARED WEIGHT", "DECLARED UNIT", "DECLARED LENGTH", "DECLARED WIDTH", "DECLARED HEIGHT", "DECLARED UNIT TYPE", "FROM NAME", 
+                   "FROM ADDRESS", "FROM CITY", "FROM STATE", "FROM POSTAL CODE", "TO NAME", "TO ADDRESS", "TO CITY", "TO STATE", "TO POSTAL CODE", 
+                   "CUST REF 1", "CUST REF 2", "BILLED LENGTH", "BILLED WIDTH", "BILLED HEIGHT", "CUBIC WEIGHT", "BILLED WEIGHT", "CHARGE CODE", 
+                   "INTL CHARGE ZONE", "RECEIVING COUNTRY", "Charge Zone", "Service", "QTY", "AVG. UNIT PRICE EX GST", "AMOUNT EX GST")
+names(ap_post_supply) <- new_col_names
 
 # Create a new folder in the specified directory
 folder_name <- paste0("ap_post_supply_", predefined_text, ".csv")
@@ -267,6 +304,7 @@ for (name in unique_names) {
   
   # Reorder the columns in final_output
   subset_data <- subset_data[, desired_order]
+  
   
   # Replace invalid characters in name
   clean_name <- gsub("[^A-Za-z0-9._-]", "_", name)

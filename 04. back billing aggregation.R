@@ -1,4 +1,5 @@
-######## just the custo and description ########
+###### Section 4. Summary calculations created ####
+#### just the custo and description ####
 summary_by_description <- billing_doc_output %>%
   filter(!(DESCRIPTION %in% c("AP Parcels Domestic Fuel Surcharge",
                               "AP Security Mgt Charge",
@@ -37,7 +38,7 @@ full_file_path <- file.path(output_folder, file_name)
 write.csv(summary_by_description, file = full_file_path, row.names = FALSE)
 
 
-######## just the description ########
+#### just the description #####
 
 summary_by_description <- billing_doc_output %>%
   filter(!(DESCRIPTION %in% c("AP Parcels Domestic Fuel Surcharge",

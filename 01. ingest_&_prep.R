@@ -1,5 +1,6 @@
-##### Prep work #####
-# bring in the required packages
+###### section 1. Ingest and prep work ####
+
+#### 1.a load required packages
 #install.packages("qpcR")
 #library(qpcR)
 
@@ -13,21 +14,21 @@
 library(dplyr)
 
 
+#### 1.b request CSV and user inputs ---- 
 
-##### Bring in the billng doc #####
 
 #bill = read.csv("ESTORELOGISTICSPTYLTD_0006794750_20240303_1013048181.csv", head=TRUE, sep=",")
 #bill = read.csv("ESTORELOGISTICSPTYLTD_0006794750_20240219_1013016084.csv", head=TRUE, sep=",")
 
-#1013156007-5729374082957312
 
 #bill = read.csv("billing_docs/1013016084-6214851349184512.csv", head=TRUE, sep=",")  # 01 - 16 feb
-bill = read.csv("billing_docs/1013048181-6514511150317568.csv", head=TRUE, sep=",")  # 17 - 28 feb
-#bill = read.csv("billing_docs/1013085979-5806754721955840.csv", head=TRUE, sep=",")  # 01 - 16 Mar
+#bill = read.csv("billing_docs/1013048181-6514511150317568.csv", head=TRUE, sep=",")  # 17 - 28 feb
+bill = read.csv("billing_docs/1013085979-5806754721955840.csv", head=TRUE, sep=",")  # 01 - 16 Mar
 #bill = read.csv("billing_docs/1013111472-5847093054799872.csv", head=TRUE, sep=",")  # 17 - 31 Mar
 #bill = read.csv("billing_docs/1013156007-5729374082957312.csv", head=TRUE, sep=",")  # 01 - 15 April
 #bill = read.csv("billing_docs/1013168047-5072493127663616.csv", head=TRUE, sep=",")  # 16 - 30 April;
 
+#### 1.c billing date extracted for title generation 
 # Get the min and max dates the bill covers
 bill$BILLING.DATE <- as.Date(as.character(bill$BILLING.DATE), format = "%Y%m%d")
 min_date <- min(bill$BILLING.DATE, na.rm = TRUE)
@@ -41,7 +42,8 @@ predefined_text <- paste( format(min_date, "%Y-%m-%d"), "to", format(max_date, "
 #cz_pre_feb_eparcel_regular_ex_syd = read.csv("reference_data/cz_pre_feb_eparcel_regular_ex_syd.csv", head=TRUE, row.names = 1,  sep=",")
 #cz_pre_feb_eparcel_express_ex_syd = read.csv("reference_data/cz_pre_feb_eparcel_express_ex_syd.csv", head=TRUE, row.names = 1,  sep=",")
 
-# post feb 1st base rates. Left in for pulling comparison calcs
+#### 1.d load the reference data
+#this could be changed to extract some a shared drive
 
 cz_post_feb_eparcel_regular_ex_mel = read.csv("reference_data/cz_post_feb_eparcel_regular_ex_mel.csv", head=TRUE, row.names = 1,  sep=",")
 cz_post_feb_eparcel_express_ex_mel = read.csv("reference_data/cz_post_feb_eparcel_express_ex_mel.csv", head=TRUE, row.names = 1,  sep=",")
@@ -53,13 +55,13 @@ cz_post_feb_eparcel_wine_ex_syd = read.csv("reference_data/cz_post_feb_eparcel_w
 cz_post_feb_eparcel_international_express_merch = read.csv("reference_data/cz_post_feb_eparcel_international_express_merch.csv", head=TRUE, row.names = 1,  sep=",")
 cz_post_feb_eparcel_international_standard = read.csv("reference_data/cz_post_feb_eparcel_international_standard.csv", head=TRUE, row.names = 1,  sep=",")
 
-
 # custo mark up
 customer_uplift_march_24 = read.csv("reference_data/customer_uplift_march_24.csv", head=TRUE, row.names = 1,  sep=",")
 #custo codes
 estore_custo_codes = read.csv("reference_data/estore_custo_codes.csv", head=TRUE, sep=",")
 
-#### customer code ----
+1
+#### 1.e customer code ----
 # Function to extract letters before the first "-"
 extract_letters <- function(text) {
   split_text <- strsplit(as.character(text), " ")[[1]]
@@ -97,8 +99,7 @@ bill$customer_code2 <- sapply(bill$customer_code, function(code) {
   }
 })
 
-
-#### remove the summary lines we do not want ####
+#### 1.f remove the summary lines and cut the dataset down ----
 bill_cut1 <- bill[!grepl("charge|surcharge|admin|fuel", bill$DESCRIPTION, ignore.case = TRUE), ]
 #bill_cut1 <- bill
 
@@ -106,7 +107,7 @@ bill_cut1 <- bill[!grepl("charge|surcharge|admin|fuel", bill$DESCRIPTION, ignore
 bill_cut1 <-  bill_cut1[,  c("REGION", "RECEIVING.COUNTRY", "customer_code", "customer_code2", "CUSTOMER", "NAME_1", "NAME_2", "NAME_3", "DESCRIPTION", "BILLING.DOC", "SERVICE.DATE", "TO.ADDRESS", "CONSIGNMENT.ID", "ARTICLE.ID",   
                             "BILLED.LENGTH", "BILLED.WIDTH", "BILLED.HEIGHT", "CUBIC.WEIGHT", "BILLED.WEIGHT", "ACTUAL.WEIGHT", "CHARGE.ZONE", "FROM.STATE", "AVG..UNIT.PRICE" ,"AMOUNT.INCL.TAX", "AMOUNT.EXCL.TAX", "DECLARED.WEIGHT")] 
 
-# get the lift service as per uplift card. This covers all thats in the description
+#### 1.g create the service column from the description to reference against rate cards
 bill_cut1$service <- ifelse(bill_cut1$REGION == "VIC" & bill_cut1$DESCRIPTION == "Parcel Post with Signature", "Regular.VIC",
                                     ifelse(bill_cut1$REGION == "VIC" & bill_cut1$DESCRIPTION == "Express Post with Signature", "Express.VIC",
                                            ifelse(bill_cut1$REGION == "NSW" & bill_cut1$DESCRIPTION == "Parcel Post with Signature", "Regular.NSW",
@@ -124,6 +125,7 @@ bill_cut1$service <- ifelse(bill_cut1$REGION == "VIC" & bill_cut1$DESCRIPTION ==
                                                                                                                                ifelse(bill_cut1$DESCRIPTION %in% c("On Demand Tonight", "On Demand Afternoon"), "OnDemand",
                                                          NA)))))))))))))))
 
+#### 1.h create the uplift column from the description to reference against uplift card ----
 bill_cut1$uplift <- ifelse(bill_cut1$DESCRIPTION == "Express Post Parcels (BYO up to 5kg)", "EPP_fivekg",
                            ifelse(bill_cut1$DESCRIPTION %in% c("eParcel Return To Sender", "eParcel Post Return", "eParcel Call For Return"), 
                                   ifelse(bill_cut1$REGION == "VIC", "Regular.VIC", 
@@ -151,7 +153,7 @@ bill_cut1$uplift <- ifelse(bill_cut1$DESCRIPTION %in% c("On Demand Tonight", "On
 bill_cut1$uplift <- ifelse(bill_cut1$DESCRIPTION == "APGL NZ Express w/Signature", "APGL", bill_cut1$uplift)
 
 
-#### create a col to determine if its GST free ####
+#### 1.i create a col to determine if its GST free ----
 
 # the NZ here represents all og APGL
 is_gst_free <- function(zone) {

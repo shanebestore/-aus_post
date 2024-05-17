@@ -1,11 +1,11 @@
-#### All services are and charges are calculated in this script #####
+###### Section 2. Base charges and uplift applied ####
+#All services are and charges are calculated in this script #####
 
-#### Ingesting Data ####
+#### 2.a Change variable name ----
 # Changing name so  cleaniness purposes
 bill_cut_a <-  bill_cut1
 
-#### Cubic size ####
-
+#### 2.b calculate Cubic size ----
 factor <- 250  # Change this to your desired factor
 cubic_size <- bill_cut_a$BILLED.HEIGHT * bill_cut_a$BILLED.LENGTH * bill_cut_a$BILLED.WIDTH
 bill_cut_a$cubic_size <- cubic_size
@@ -19,7 +19,7 @@ bill_cut_a <- mutate(bill_cut_a,
                                                 pmax(cubic_weight, BILLED.WEIGHT))))
 
 
-#### Declare the charges ####
+#### 2.c declare the charges (user inputs) ----
 #fuel charge_ex_gst has to be calculated from the exgst charge value
 gst <- 0.1
 #fuel_surcharge_pct <- (as.numeric(input$fuel_surcharge)/100)  #### 1/1 of uder inputs
@@ -30,10 +30,11 @@ exp_eparcel_returns_fee <- 28.45
 reg_eparcel_returns_fee <- 12.43
 over_max_limits_fee <-100
 
-#### over max limites fee
+#### 2.d over max limits fee ----
 bill_cut_a$over_max_limits_fee <- ifelse(bill_cut_a$service != 'International' & (bill_cut_a$ACTUAL.WEIGHT > 22 | bill_cut_a$BILLED.LENGTH > 105 | bill_cut_a$cubic_size > 0.25), 100, NA)
 
-#### Classifying weights ####
+#### 2.e weight classification  ----
+# take just the max weight
 cz_max_weight <- bill_cut_a$max_weight
 
 # Define the new categorisation function for "EPARCEL WINE STD" for VIC and NSW
@@ -118,10 +119,9 @@ categorize_weight_for_basic <- function(weight_kg) {
   return(categories)
 }
 
-
 weight_category_max <- character(nrow(bill_cut_a))
 
-# description here is better as we the weight categories are for the rates card, not the uplift service. 
+# apply the functions based on description
 for (i in 1:nrow(bill_cut_a)) {
   DESCRIPTION  <- bill_cut_a$DESCRIPTION [i]
   weight <- cz_max_weight[i]
@@ -137,7 +137,7 @@ for (i in 1:nrow(bill_cut_a)) {
 
 output_a <- cbind(bill_cut_a, weight_category_max)
 
-#### Calculate the base charges from the rat card ####
+#### 2.f Calculate the base charges from the rate card ----
 #### Base charge for Regular.VIC ####
 
 # cut the dataset down to correct uplift service
@@ -549,12 +549,14 @@ subset_and_operate <- function(data) {
 output_m <- subset_and_operate(output_a)
 
 
-#### combine all DFs together ######
+#### 2.g combine all DFs together ----
 output_all_services  <- rbind(output_a_2, output_b_2, output_c_2, output_d_2, output_f, output_g, output_h, output_i_2, output_j_2, output_l_2, output_k_2, output_m)
 
+# write to ourput fortesting purposes
 #write.csv(output_all_services, file = "output_all_services.csv")
 
-#### additional mapping ####
+
+#### 2.h wine mark up (WIP) ----
 # 1.50 mark up for wine tbc
 
 #output_all_services <- output_all_services %>%
@@ -565,7 +567,7 @@ output_all_services  <- rbind(output_a_2, output_b_2, output_c_2, output_d_2, ou
 #  ) %>%
 #  ungroup()
 
-
+#### 2.i GST removal, fuel surcharge calculation and security mng calculation ----
 output_all_services$base_charge_exgst <- ifelse(output_all_services$is_gst_free_zone == 'No', 
                                                 (output_all_services$base_charge_incgst/ 110) * 100, 
                                                 output_all_services$base_charge_incgst)
@@ -595,7 +597,7 @@ output_all_services$sec_mng_gst <- output_all_services$sec_mng_chrg * gst
 
 
 
-##### multiply by customer uplift   ####
+#### 2.j index customer uplift ----
 # first step is to find the indices 
 
 # Initialize vectors to store results
@@ -746,5 +748,5 @@ output_all_services_2 <- output_all_services_2
 #output_all_services_2 <- subset(output_all_services_2 , ARTICLE.ID %in% c('ET236199765AU'))
 ##### write to CSV ####
 
-write.csv(output_all_services_2, file = "output_all_services_2.csv")
+#write.csv(output_all_services_2, file = "output_all_services_2.csv")
 
