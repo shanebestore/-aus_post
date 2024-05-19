@@ -597,7 +597,7 @@ output_all_services$sec_mng_gst <- output_all_services$sec_mng_chrg * gst
 
 
 
-#### 2.j index customer uplift ----
+#### 2.j index and customer uplift ----
 # first step is to find the indices 
 
 # Initialize vectors to store results
@@ -641,11 +641,12 @@ extract_charge_value_uplift <- function(row_index_uplift, col_index_uplift) {
 
 output_all_services_2$charge_value_uplift <- mapply(extract_charge_value_uplift, output_all_services_2$row_index_uplift, output_all_services_2$col_index_uplift)
 
-
+# left in for testing purposes
 #write.csv(output_all_services_2, file = "output_all_services.csv")
-#### warning cols taken here
+
+#### 2.k warning column ----
 # Col to highlight if we are missing weight information or custo has no uplift
-# Create a new column 'warnings' in output_all_services_2
+
 output_all_services_2$warnings <- NA
 
 # Condition 1: If charge_value_uplift is blank, NA, or 0
@@ -688,12 +689,13 @@ output_all_services_2$warnings <- ifelse(is.na(output_all_services_2$CHARGE.ZONE
                                          paste(output_all_services_2$warnings, "No charge zone detected. "),
                                          output_all_services_2$warnings)
 
+#might need to cut this
 #output_all_services_2$warnings <- ifelse(is.na(output_all_services_2$corresponding_value) | 
 #                                           output_all_services_2$corresponding_value == "custo code not found",
 #                                         "custo code not found",
 #                                         output_all_services_2$warnings)
 
-#### multiply base by uplift ####
+#### 2.l multiply base by the uplift figure ----
 # Incgst Convert charge_value_uplift to numeric, handling NA values
 output_all_services_2$charge_value_uplift_numeric_incgst <- ifelse(is.na(output_all_services_2$charge_value_uplift) | is.na(output_all_services_2$base_charge_exgst),
                                                                    NA,
@@ -722,8 +724,7 @@ output_all_services_2$charge_to_custo_exgst <- ifelse(is.na(output_all_services_
                                                       output_all_services_2$charge_value_max_exgst_numeric + output_all_services_2$uplift_figure_exgst)
 
 
-# fuel surcharge based on the uplift
-
+#### 2.m calculate fuel surcharge ----
 # calculate fuel surcharge based on mark up
 # Calculate fuel surcharge only for non-International entries
 output_all_services_2$fuel_surcharge_uplifted <- ifelse(!(output_all_services_2$uplift %in% c("International", "APGL", "OnDemand")),
@@ -735,7 +736,6 @@ output_all_services_2$fuel_surchrg_uplift_gst <- ifelse(output_all_services_2$fu
                                                         output_all_services_2$fuel_surcharge_uplifted * gst,
                                        0)
 
-
 # calculate security management fee
 output_all_services_2$sec_mng_chrg_uplifted <- ifelse(output_all_services_2$DESCRIPTION == "Express Post with Signature",
                                                     output_all_services_2$charge_to_custo_exgst * sec_mng_chrg_pct,
@@ -745,8 +745,6 @@ output_all_services_2$sec_mng_uplifted_gst <- output_all_services_2$sec_mng_chrg
 # update table name
 output_all_services_2 <- output_all_services_2
 
-#output_all_services_2 <- subset(output_all_services_2 , ARTICLE.ID %in% c('ET236199765AU'))
-##### write to CSV ####
-
+# left in for testing purposes
 #write.csv(output_all_services_2, file = "output_all_services_2.csv")
 
