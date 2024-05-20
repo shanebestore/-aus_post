@@ -38,6 +38,7 @@ ui <- fluidPage(
   )
 )
 # Define server logic
+# Define server logic
 server <- function(input, output) {
   # Increase maximum file size limit to 1 GB
   options(shiny.maxRequestSize = 1024*1024*1024) # 1 GB in bytes
@@ -79,6 +80,11 @@ server <- function(input, output) {
       })
       return()
     }
+    
+    # Feedback message
+    output$feedback_message <- renderText({
+      "Process initiated."
+    })
     
     # Read the uploaded CSV file
     bill <- read.csv(user_inputs$csv_file$datapath, head=TRUE, sep=",")
@@ -137,6 +143,7 @@ ui <- fluidPage(
     ),
     mainPanel(
       verbatimTextOutput("summary"),
+      textOutput("feedback_message"), # Display feedback message
       verbatimTextOutput("custom_output"), # Adding custom output element
       downloadButton("download_link", "Download Result CSV")
     )
@@ -145,4 +152,3 @@ ui <- fluidPage(
 
 # Run the application
 shinyApp(ui = ui, server = server)
-
