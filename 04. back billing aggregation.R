@@ -1,5 +1,5 @@
-###### Section 4. Summary calculations created ####
-#### just the custo and description ####
+###### Section 4.a Summary calculations created ----
+# just the custo and description 
 summary_by_description <- billing_doc_output %>%
   filter(!(DESCRIPTION %in% c("AP Parcels Domestic Fuel Surcharge",
                               "AP Security Mgt Charge",
@@ -38,8 +38,7 @@ full_file_path <- file.path(output_folder, file_name)
 write.csv(summary_by_description, file = full_file_path, row.names = FALSE)
 
 
-#### just the description #####
-
+#just the description 
 summary_by_description <- billing_doc_output %>%
   filter(!(DESCRIPTION %in% c("AP Parcels Domestic Fuel Surcharge",
                               "AP Security Mgt Charge",
@@ -65,7 +64,6 @@ summary_by_description <- billing_doc_output %>%
     #    sum_of_OVER.MAX.LIMITS.FEE = sum(OVER.MAX.LIMITS.FEE, na.rm = TRUE),
     sum_of_over_max_limits_fee = sum(over_max_limits_fee, na.rm = TRUE)
   )
-
 
 output_folder <- file.path(getwd(), paste0("output_billing_dates_", predefined_text))
 if (!file.exists(output_folder)) {

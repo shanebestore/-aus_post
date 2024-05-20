@@ -5,16 +5,20 @@
 # Find out more about building applications with Shiny here:
 #
 #    https://shiny.posit.co/
-#
----
-  title: "Untitled"
-author: "Shane Brennan"
-date: "2024-05-13"
-output: html_document
-runtime: shiny
----
-  
 
+#precurser files
+rsconnect::setAccountInfo(name='estorelogistics',
+                         token='DEDD479AA07AC545E656A5C9015EB3BB',
+                        secret='RfE1CzWLqUdudUMr2Te+H9c069453mXDXKxw1KsL')
+
+library(rsconnect)
+
+                        
+rsconnect::deployApp('C:\\Users\\shaneb\\Desktop\\aus_repo_2\\-aus_post\\app1505')
+
+
+
+knitr::opts_chunk$set(echo = TRUE)
 library(dplyr)
 library(shiny)
 
@@ -38,8 +42,9 @@ ui <- fluidPage(
 
 # Define server logic
 server <- function(input, output) {
-  # Define a reactive expression to store user inputs
+  # Increase maximum file size limit to 1 GB
   options(shiny.maxRequestSize = 1024*1024*1024) # 1 GB in bytes
+  # Define a reactive expression to store user inputs
   user_data <- reactive({
     list(
       fuel_surcharge = as.numeric(gsub("%", "", input$fuel_surcharge)),
@@ -56,7 +61,6 @@ server <- function(input, output) {
     if (!is.null(user_inputs$fuel_surcharge) && !is.null(user_inputs$force_majeure_fee) && !is.null(user_inputs$peak_fee) && !is.null(user_inputs$csv_file)) {
       # Execute your custom script here
       bill <- read.csv(user_inputs$csv_file$datapath, head=TRUE, sep=",")  # Read uploaded CSV file
-      #      bill <- read.csv("billing_docs/1013048181-6514511150317568.csv", head=TRUE, sep=",")  # 17 - 28 feb
       sum_qty <- sum(bill$QTY)
       result <- sum_qty * user_inputs$fuel_surcharge
       print(result)
@@ -83,4 +87,3 @@ server <- function(input, output) {
 
 # Run the application
 shinyApp(ui = ui, server = server)
-

@@ -1,22 +1,19 @@
-###### Section 3. Merging new charges with AP invoice ####
-#### Generate billing doc output file (line by line comparison) ####
+#### Section 3. Generate billing doc output file (line by line comparison). Its a merger between AP invoice and the newly calculated cols ####
 # join the selected columns onto the billing doc in the correct places
-# this creates the billing_doc_output which is a just the original output withe the new columns added. Great for looking at individual lines
+# this creates the billing_doc_output which is a just the original output withe the new columns added. To be used to inspect individual lines
 
-# rename the article_id
-names(bill)[names(bill) == "ARTICLE.ID"] <- "article_id"
-names(output_all_services_2)[names(output_all_services_2) == "ARTICLE.ID"] <- "article_id"
-
+#### 3.a Specify which columns to merge with AP invoice and join in correct spot ----
 # Specify columns to merge from output_all_services_2
-merge_cols <- c( "service", "uplift", "DESCRIPTION", "BILLING.DOC", "article_id", 
+merge_cols <- c( "service", "uplift", "DESCRIPTION", "BILLING.DOC", "ARTICLE.ID", 
                 "base_charge_incgst", "base_charge_exgst", "base_charge_tax", "charge_value_uplift", "uplift_figure_exgst", 
                 "charge_to_custo_exgst", "cubic_weight", "max_weight", "fuel_surcharge","fuel_surcharge_uplifted", "fuel_gst","fuel_surchrg_uplift_gst", "sec_mng_chrg", "sec_mng_chrg_uplifted", "sec_mng_gst", "sec_mng_uplifted_gst",
                 "over_max_limits_fee", "weight_category_max", "warnings", "is_gst_free_zone")
-#"customer_code2", "customer_code",
+
 selected_output_all_services_2 <- output_all_services_2[, merge_cols]
 
+# this can probably all go now
 # Merge bill and selected columns from output_all_services_2 by the unique identifier 
-billing_doc_output <- merge(bill, selected_output_all_services_2, by = c("article_id", "BILLING.DOC", "DESCRIPTION"), all = TRUE)
+billing_doc_output <- merge(bill, selected_output_all_services_2, by = c("ARTICLE.ID", "BILLING.DOC", "DESCRIPTION"), all = TRUE)
 
 # Insert new columns after "AVG..UNIT.PRICE"
 avg_unit_price_index <- which(names(billing_doc_output ) == "AMOUNT.INCL.TAX")
@@ -24,13 +21,11 @@ billing_doc_output  <- cbind(billing_doc_output [, 1:avg_unit_price_index],
                       billing_doc_output [, c("base_charge_incgst","base_charge_exgst", "base_charge_tax", "charge_value_uplift", "uplift_figure_exgst", "charge_to_custo_exgst", "warnings")],
                       billing_doc_output [, (avg_unit_price_index + 1):ncol(billing_doc_output )])
 
-
 # Insert new columns after "FUEL.GST"
 fuel_gst_index <- which(names(billing_doc_output ) == "FUEL.GST")
 billing_doc_output  <- cbind(billing_doc_output [, 1:fuel_gst_index  ],
                       billing_doc_output [, c("fuel_surcharge" ,"fuel_gst", "sec_mng_chrg", "sec_mng_gst", "over_max_limits_fee")],
                       billing_doc_output [, (fuel_gst_index  + 1):ncol(billing_doc_output )])
-
 
 # Insert new columns after "BILLED.WEIGHT"
 billed_weight_index <- which(names(billing_doc_output ) == "BILLED.WEIGHT")
@@ -50,8 +45,8 @@ discrepancy <- function(billing_doc_output) {
 }
 billing_doc_output <- discrepancy(billing_doc_output)
 
-# remove duplicates and reorder 
-  desired_order <- c("article_id", "BILLING.DOC", "DESCRIPTION", "CUSTOMER", "NAME_1", "NAME_2", "NAME_3", "STREET", "CITY", "REGION", "POST.CODE", 
+#### 3.b remove duplicates and re-order columns ----
+  desired_order <- c("ARTICLE.ID", "BILLING.DOC", "DESCRIPTION", "CUSTOMER", "NAME_1", "NAME_2", "NAME_3", "STREET", "CITY", "REGION", "POST.CODE", 
   "TELEPHONE", "FAX.NUMBER", "MAILING.STATEMENT.NO.", "ASSIGNMENT.NO.", "SERVICE.DATE", "WORK.CENTRE", "WORK.CENTRE.NAME", "CUSTOMER.REF", "CUSTOMER.REFDOC", 
   "ITEM", "MATERIAL", "QTY", "AVG..UNIT.PRICE", "AMOUNT.INCL.TAX", "base_charge_incgst", "base_charge_exgst", "discrepancy", "base_charge_tax", "charge_value_uplift", 
   "uplift_figure_exgst", "charge_to_custo_exgst", "warnings", "TAX.CODE", "TAX.AMOUNT", "AMOUNT.EXCL.TAX", "INVOICE.TOTAL", "TOTAL.QTY", "BILLING.CURRENCY", 
@@ -71,11 +66,7 @@ billing_doc_output <- discrepancy(billing_doc_output)
 # Reorder the columns in final_output
 billing_doc_output <- billing_doc_output [, desired_order]
 
-
-
-
-#### sum for the aggregation lines ----
-
+#### 3.c sum the aggregation lines ----
 # Calculate the sum of fuel_surcharge_uplifted per BILLING.DOC
 fuel_surcharge_per_billing_doc <- billing_doc_output %>%
   filter(is_gst_free_zone == 'No') %>%
@@ -132,7 +123,7 @@ billing_doc_output <- billing_doc_output %>%
                                     total_sec_mng_chrg,
                                     base_charge_exgst)) %>% select(-total_sec_mng_chrg)
 
-#### bring across the services that we are not touching ----
+#### 3.d bring across the services we are not uplifting ----
 billing_doc_output$base_charge_incgst <- ifelse(billing_doc_output$DESCRIPTION %in% c(
   "More to Pay",
   "On Demand Return to Sender", 
@@ -161,7 +152,7 @@ billing_doc_output$base_charge_exgst <- ifelse(billing_doc_output$DESCRIPTION %i
 
 
 
-# quick fix for charge to customer. Will have to revise this down the line
+#### 3.e get final charge per customer -----
 #billing_doc_output$avg_unit_price_charge_to_custo_ex_gst <- billing_doc_output$QTY * billing_doc_output$charge_to_custo_exgst
 max_charge <- pmax(billing_doc_output$charge_to_custo_exgst, billing_doc_output$base_charge_exgst, na.rm = TRUE)
 max_charge[is.na(max_charge)] <- 0
@@ -170,7 +161,7 @@ billing_doc_output$charge_to_custo_exgst <- max_charge
 billing_doc_output$avg_unit_price_charge_to_custo_ex_gst <- billing_doc_output$QTY * billing_doc_output$charge_to_custo_exgst
 
 
-# generate the file path
+#### 3.f generate the file path ----
 output_folder <- file.path(getwd(), paste0("output_billing_dates_", predefined_text))
 if (!file.exists(output_folder)) {
   dir.create(output_folder, recursive = TRUE)
@@ -186,7 +177,7 @@ write.csv(billing_doc_output, file = full_file_path, row.names = FALSE)
 #create international_charge_zone
 billing_doc_output$intl_charge_zone <- billing_doc_output$CHARGE.ZONE
 
-#Restructure define the services for the outputs
+#### 3.g Redefine the services for the supply file ----
 # Restructuring to define the services for the outputs
 billing_doc_output$Service <- ""
 
@@ -239,16 +230,16 @@ billing_doc_output$Service[billing_doc_output$DESCRIPTION == "On Demand Return t
 
 
 
-
-
-# Remove rows where DESCRIPTION is blank
+#### 3.h Remove the compensation rows ----
+#Remove rows where DESCRIPTION is blank 
 billing_doc_output <- billing_doc_output[!is.na(billing_doc_output$DESCRIPTION) & billing_doc_output$DESCRIPTION != "", ]
 
 
 # Produce the output for in the right structure this will be the basis for the aggregation and calculation files
+# need to determine if we remove the below
 desired_order <- c(
   "customer_code", "NAME_1", "MAILING.STATEMENT.NO.", "ASSIGNMENT.NO." , "SERVICE.DATE" , "DESCRIPTION",
-  "BILLING.DATE", "CONSIGNMENT.ID", "article_id", "LODGEMENT.DATE", "ACTUAL.WEIGHT", "ACTUAL.UNIT", "ACTUAL.LENGTH",
+  "BILLING.DATE", "CONSIGNMENT.ID", "ARTICLE.ID", "LODGEMENT.DATE", "ACTUAL.WEIGHT", "ACTUAL.UNIT", "ACTUAL.LENGTH",
   "ACTUAL.WIDTH", "ACTUAL.HEIGHT", "ACTUAL.UNIT.TYPE", 	
   "DECLARED.UNIT.TYPE", "DECLARED.WEIGHT",	"DECLARED.UNIT",	"DECLARED.LENGTH",	"DECLARED.WIDTH",
   "DECLARED.HEIGHT",	"DECLARED.UNIT.TYPE", "FROM.NAME", 	"FROM.ADDRESS",	"FROM.CITY",	"FROM.STATE",	"FROM.POSTAL.CODE",
@@ -261,11 +252,11 @@ desired_order <- c(
 #billing_doc_output <- billing_doc_output [, desired_order]
 
 
-#### build ap_post_supply ----
+#### 3.i reorder and rename columns for ap_post_supply ----
 
 desired_order <- c(
   "customer_code", "NAME_1", "MAILING.STATEMENT.NO.", "ASSIGNMENT.NO.", "SERVICE.DATE", "DESCRIPTION",
-  "BILLING.DATE", "CONSIGNMENT.ID", "article_id", "LODGEMENT.DATE", "ACTUAL.WEIGHT", "ACTUAL.UNIT", "ACTUAL.LENGTH",
+  "BILLING.DATE", "CONSIGNMENT.ID", "ARTICLE.ID", "LODGEMENT.DATE", "ACTUAL.WEIGHT", "ACTUAL.UNIT", "ACTUAL.LENGTH",
   "ACTUAL.WIDTH", "ACTUAL.HEIGHT", "ACTUAL.UNIT.TYPE", "DECLARED.WEIGHT",	"DECLARED.UNIT",	"DECLARED.LENGTH",	"DECLARED.WIDTH",
   "DECLARED.HEIGHT",	"DECLARED.UNIT.TYPE", "FROM.NAME", 	"FROM.ADDRESS",	"FROM.CITY",	"FROM.STATE",	"FROM.POSTAL.CODE",
   "TO.NAME",	"TO.ADDRESS",	"TO.CITY",	"TO.STATE",	"TO.POSTAL.CODE", "CUST.REF.1",	"CUST.REF.2",	"BILLED.LENGTH", "BILLED.WIDTH",
@@ -285,15 +276,14 @@ new_col_names <- c("Code", "NAME_1", "MAILING STATEMENT NO.", "ASSIGNMENT NO.", 
                    "INTL CHARGE ZONE", "RECEIVING COUNTRY", "Charge Zone", "Service", "QTY", "AVG. UNIT PRICE EX GST", "AMOUNT EX GST")
 names(ap_post_supply) <- new_col_names
 
-# Create a new folder in the specified directory
+#### 3.j create a folder to store outputs ----
 folder_name <- paste0("ap_post_supply_", predefined_text, ".csv")
 # Replace invalid characters in folder name
 clean_folder_name <- gsub("[^A-Za-z0-9._-]", "_", folder_name)
 new_folder_path <- file.path(output_folder, clean_folder_name)
 dir.create(new_folder_path, showWarnings = FALSE)
 
-
-
+#### 3.k split the ap supply out per customer ----
 # Get unique values of NAME_1
 unique_names <- unique(billing_doc_output$NAME_1)
 
@@ -305,7 +295,6 @@ for (name in unique_names) {
   # Reorder the columns in final_output
   subset_data <- subset_data[, desired_order]
   
-  
   # Replace invalid characters in name
   clean_name <- gsub("[^A-Za-z0-9._-]", "_", name)
   
@@ -316,9 +305,7 @@ for (name in unique_names) {
   write.csv(subset_data, file = file_name, row.names = FALSE)
 }
 
-
-
-##### ap post supply consolodated ###
+#### 3.l create the ap post supply consolidated ----
 output_folder <- file.path(getwd(), paste0("output_billing_dates_", predefined_text))
 if (!file.exists(output_folder)) {
   dir.create(output_folder, recursive = TRUE)
@@ -328,5 +315,3 @@ file_name <- paste0("ap_post_supply_consolidated_", predefined_text, ".csv")
 full_file_path <- file.path(output_folder, file_name)
 
 write.csv(ap_post_supply, file = full_file_path, row.names = FALSE)
-
-

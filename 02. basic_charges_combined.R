@@ -572,10 +572,8 @@ output_all_services$base_charge_exgst <- ifelse(output_all_services$is_gst_free_
                                                 (output_all_services$base_charge_incgst/ 110) * 100, 
                                                 output_all_services$base_charge_incgst)
 
-
 # find the tax amount
 output_all_services$base_charge_tax <- output_all_services$base_charge_incgst - output_all_services$base_charge_exgst 
-
 
 # Calculate fuel surcharge only for non-International entries
 output_all_services$fuel_surcharge <- ifelse(!(output_all_services$uplift %in% c("International", "APGL", "OnDemand")),
