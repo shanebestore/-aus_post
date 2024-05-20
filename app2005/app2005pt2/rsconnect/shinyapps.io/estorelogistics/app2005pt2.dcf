@@ -1,12 +1,12 @@
-name: app2005
-title: app2005
+name: app2005pt2
+title: app2005pt2
 username: estorelogistics
 account: estorelogistics
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
-appId: 12032928
-bundleId: 8636189
-url: https://estorelogistics.shinyapps.io/app2005/
+appId: 12033302
+bundleId: 8636325
+url: https://estorelogistics.shinyapps.io/app2005pt2/
 version: 1
 asMultiple: FALSE
 asStatic: FALSE

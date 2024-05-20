@@ -1,5 +1,12 @@
+#
+# This is a Shiny web application. You can run the application by clicking
+# the 'Run App' button above.
+#
+# Find out more about building applications with Shiny here:
+#
+#    https://shiny.posit.co/
+#
 #precurser files
-# once this is run it doesn't need to run again
 #rsconnect::setAccountInfo(name='estorelogistics',
 #                          token='DEDD479AA07AC545E656A5C9015EB3BB',
 #                          secret='RfE1CzWLqUdudUMr2Te+H9c069453mXDXKxw1KsL')
@@ -21,6 +28,7 @@ ui <- fluidPage(
       textInput("fuel_surcharge", "Insert Fuel Surcharge % for the month (e.g., 7.7) "),
       textInput("force_majeure_fee", "Insert Force Majeure Fee. Insert 0 if there is none"),
       textInput("peak_fee", "Insert Peak Fee. Insert 0 if there is none"),
+      textInput("folder_path", "Insert Folder Path to Save CSV"),
       actionButton("submit", "Submit")
     ),
     mainPanel(
@@ -29,7 +37,6 @@ ui <- fluidPage(
     )
   )
 )
-
 # Define server logic
 server <- function(input, output) {
   # Increase maximum file size limit to 1 GB
@@ -50,9 +57,17 @@ server <- function(input, output) {
     user_inputs <- user_data()
     
     # Check if fields are filled
-    if (any(sapply(user_inputs[c("fuel_surcharge", "force_majeure_fee", "peak_fee")], is.na))) {
+    if (any(sapply(user_inputs[c("fuel_surcharge", "force_majeure_fee", "peak_fee")], is.null))) {
       output$custom_output <- renderPrint({
         cat("Error: Please fill in all fields.\n")
+      })
+      return()
+    }
+    
+    # Check if numeric values are entered
+    if (any(sapply(user_inputs[c("fuel_surcharge", "force_majeure_fee", "peak_fee")], function(x) !is.numeric(x)))) {
+      output$custom_output <- renderPrint({
+        cat("Error: Please enter numeric values for the fuel surcharge, force majeure fee, and peak fee.\n")
       })
       return()
     }
@@ -80,8 +95,15 @@ server <- function(input, output) {
     sum_qty <- sum(bill$QTY, na.rm = TRUE)
     result <- sum_qty * user_inputs$fuel_surcharge
     
-    # Save the result to a CSV file
-    write.csv(result, file = "result.csv")
+    # Provide a download link for the result CSV file
+    output$download_link <- downloadHandler(
+      filename = function() {
+        "result.csv"
+      },
+      content = function(file) {
+        write.csv(result, file)
+      }
+    )
     
     # Print confirmation message with the result
     output$custom_output <- renderPrint({
@@ -90,7 +112,6 @@ server <- function(input, output) {
       cat("Fuel Surcharge:", user_inputs$fuel_surcharge, "\n")
       cat("Result (sum_qty * fuel_surcharge):", result, "\n")
     })
-    
   })
   
   # Render the summary text
@@ -103,5 +124,25 @@ server <- function(input, output) {
   })
 }
 
+# Define UI
+ui <- fluidPage(
+  titlePanel("Input Form"),
+  sidebarLayout(
+    sidebarPanel(
+      fileInput("csv_file", "Upload CSV File", accept = ".csv"),
+      textInput("fuel_surcharge", "Insert Fuel Surcharge % for the month (e.g., 7.7) "),
+      textInput("force_majeure_fee", "Insert Force Majeure Fee. Insert 0 if there is none"),
+      textInput("peak_fee", "Insert Peak Fee. Insert 0 if there is none"),
+      actionButton("submit", "Submit")
+    ),
+    mainPanel(
+      verbatimTextOutput("summary"),
+      verbatimTextOutput("custom_output"), # Adding custom output element
+      downloadButton("download_link", "Download Result CSV")
+    )
+  )
+)
+
 # Run the application
 shinyApp(ui = ui, server = server)
+
