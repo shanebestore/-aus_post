@@ -1,3 +1,4 @@
+knitr::opts_chunk$set(echo = TRUE)
 library(dplyr)
 library(shiny)
 
@@ -10,19 +11,16 @@ ui <- fluidPage(
       textInput("fuel_surcharge", "Insert Fuel Surcharge % for the month (e.g., 7.7) "),
       textInput("force_majeure_fee", "Insert Force Majeure Fee. Insert 0 if there is none"),
       textInput("peak_fee", "Insert Peak Fee. Insert 0 if there is none"),
+      textInput("folder_path", "Insert Folder Path to Save CSV"),
       actionButton("submit", "Submit")
     ),
     mainPanel(
       verbatimTextOutput("summary"),
-      textOutput("feedback_message"), # Display feedback message
-      verbatimTextOutput("custom_output"), # Adding custom output element
-      downloadButton("download_result", "Download Result CSV"),
-      downloadButton("download_result2", "Download Result2 CSV"),
-      downloadButton("download_result3", "Download Result3 CSV")
+      verbatimTextOutput("custom_output") # Adding custom output element
     )
   )
 )
-
+# Define server logic
 # Define server logic
 server <- function(input, output) {
   # Increase maximum file size limit to 1 GB
@@ -108,34 +106,14 @@ server <- function(input, output) {
     # Proceed with calculation
     sum_qty <- sum(bill$QTY, na.rm = TRUE)
     result <- sum_qty * user_inputs$fuel_surcharge
-    result2 <- sum_qty * user_inputs$fuel_surcharge
-    result3 <- sum_qty * user_inputs$fuel_surcharge
     
-    # Provide a download link for the result CSV files
-    output$download_result <- downloadHandler(
+    # Provide a download link for the result CSV file
+    output$download_link <- downloadHandler(
       filename = function() {
         "result.csv"
       },
       content = function(file) {
         write.csv(result, file)
-      }
-    )
-    
-    output$download_result2 <- downloadHandler(
-      filename = function() {
-        "result2.csv"
-      },
-      content = function(file) {
-        write.csv(result2, file)
-      }
-    )
-    
-    output$download_result3 <- downloadHandler(
-      filename = function() {
-        "result3.csv"
-      },
-      content = function(file) {
-        write.csv(result3, file)
       }
     )
     
@@ -157,6 +135,27 @@ server <- function(input, output) {
     cat("Peak Fee:", user_inputs$peak_fee, "\n")
   })
 }
+
+
+# Define UI
+ui <- fluidPage(
+  titlePanel("Input Form"),
+  sidebarLayout(
+    sidebarPanel(
+      fileInput("csv_file", "Upload CSV File", accept = ".csv"),
+      textInput("fuel_surcharge", "Insert Fuel Surcharge % for the month (e.g., 7.7) "),
+      textInput("force_majeure_fee", "Insert Force Majeure Fee. Insert 0 if there is none"),
+      textInput("peak_fee", "Insert Peak Fee. Insert 0 if there is none"),
+      actionButton("submit", "Submit")
+    ),
+    mainPanel(
+      verbatimTextOutput("summary"),
+      textOutput("feedback_message"), # Display feedback message
+      verbatimTextOutput("custom_output"), # Adding custom output element
+      downloadButton("download_link", "Download Result CSV")
+    )
+  )
+)
 
 # Run the application
 shinyApp(ui = ui, server = server)

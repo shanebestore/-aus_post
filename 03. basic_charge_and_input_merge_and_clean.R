@@ -201,7 +201,7 @@ billing_doc_output$Service[billing_doc_output$DESCRIPTION == "PACK AND TRACK INT
                              billing_doc_output$DESCRIPTION == "Express Courier International (eParcel)"] <- "eParcel International"
 billing_doc_output$Service[billing_doc_output$DESCRIPTION == "AP International Line Haul Surcharge"]    <- "eParcel International Line Haul Surcharge"
 billing_doc_output$Service[billing_doc_output$DESCRIPTION == "International Returns Express"|
-                             billing_doc_output$DESCRIPTION == "International  Returns AIRs"]           <- "eParcel International Returns"  # check here for typo
+                             billing_doc_output$DESCRIPTION == "International  Returns AIR"]           <- "eParcel International Returns"  # check here for typo
 
 billing_doc_output$Service[billing_doc_output$DESCRIPTION == "Parcel Post with Signature"|
                              billing_doc_output$DESCRIPTION == "AP Parcels Domestic Fuel Surcharge" |

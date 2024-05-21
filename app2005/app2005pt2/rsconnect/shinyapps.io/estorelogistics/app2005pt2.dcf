@@ -5,7 +5,7 @@ account: estorelogistics
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 12033302
-bundleId: 8636463
+bundleId: 8637049
 url: https://estorelogistics.shinyapps.io/app2005pt2/
 version: 1
 asMultiple: FALSE

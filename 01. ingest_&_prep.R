@@ -60,7 +60,7 @@ customer_uplift_march_24 = read.csv("reference_data/customer_uplift_march_24.csv
 #custo codes
 estore_custo_codes = read.csv("reference_data/estore_custo_codes.csv", head=TRUE, sep=",")
 
-1
+
 #### 1.e customer code ----
 # Function to extract letters before the first "-"
 extract_letters <- function(text) {
