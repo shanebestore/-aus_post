@@ -7,16 +7,16 @@ bill_cut_a <-  bill_cut1
 
 #### 2.b calculate Cubic size ----
 factor <- 250  # Change this to your desired factor
-cubic_size <- bill_cut_a$BILLED.HEIGHT * bill_cut_a$BILLED.LENGTH * bill_cut_a$BILLED.WIDTH
+cubic_size <- bill_cut_a$"BILLED HEIGHT" * bill_cut_a$"BILLED LENGTH" * bill_cut_a$"BILLED WIDTH"
 bill_cut_a$cubic_size <- cubic_size
 bill_cut_a$cubic_weight <- cubic_size * factor
 
 bill_cut_a <- mutate(bill_cut_a, 
                      max_weight = ifelse(service == 'International', 
-                                         ifelse(BILLED.WEIGHT == 0, DECLARED.WEIGHT, BILLED.WEIGHT),
-                                         ifelse(cubic_weight == 0 & BILLED.WEIGHT == 0, 
-                                                DECLARED.WEIGHT, 
-                                                pmax(cubic_weight, BILLED.WEIGHT))))
+                                         ifelse(bill_cut_a$"BILLED WEIGHT" == 0, bill_cut_a$"DECLARED WEIGHT", bill_cut_a$"BILLED WEIGHT"),
+                                         ifelse(bill_cut_a$"cubic_weight" == 0 & bill_cut_a$"BILLED WEIGHT" == 0, 
+                                                bill_cut_a$"DECLARED WEIGHT", 
+                                                pmax(bill_cut_a$"cubic_weight", bill_cut_a$"BILLED WEIGHT"))))
 
 
 #### 2.c declare the charges (user inputs) ----
@@ -31,7 +31,7 @@ reg_eparcel_returns_fee <- 12.43
 over_max_limits_fee <-100
 
 #### 2.d over max limits fee ----
-bill_cut_a$over_max_limits_fee <- ifelse(bill_cut_a$service != 'International' & (bill_cut_a$ACTUAL.WEIGHT > 22 | bill_cut_a$BILLED.LENGTH > 105 | bill_cut_a$cubic_size > 0.25), 100, NA)
+bill_cut_a$over_max_limits_fee <- ifelse(bill_cut_a$service != 'International' & (bill_cut_a$"ACTUAL WEIGHT" > 22 | bill_cut_a$"BILLED LENGTH" > 105 | bill_cut_a$cubic_size > 0.25), 100, NA)
 
 #### 2.e weight classification  ----
 # take just the max weight
@@ -151,7 +151,7 @@ col_index_max <- unlist(lapply(output_a1$weight_category_max, function(col_name_
   which(colnames(cz_post_feb_eparcel_regular_ex_mel) == col_name_max)
 }))
 
-row_name_max<- as.character(output_a1$CHARGE.ZONE)
+row_name_max<- as.character(output_a1$"CHARGE ZONE")
 row_index_max <- unlist(lapply(row_name_max, function(row_name_max) {
   index <- which(rownames(cz_post_feb_eparcel_regular_ex_mel) == row_name_max)
   if (length(index) == 0) {
@@ -183,6 +183,7 @@ calculate_final_charge <- function(charge_value_max_incgst , weight_category_max
   }
 }
 
+
 output_a_2$base_charge_incgst <- mapply(calculate_final_charge, output_a_2$charge_value_max_incgst , output_a_2$weight_category_max, output_a_2$max_weight, output_a_2$row_index_max)
 
 #### Base charge for Express.VIC ####
@@ -197,7 +198,7 @@ col_index_max <- unlist(lapply(output_b1$weight_category_max, function(col_name_
   which(colnames(cz_post_feb_eparcel_express_ex_mel) == col_name_max)
 }))
 
-row_name_max<- as.character(output_b1$CHARGE.ZONE)
+row_name_max<- as.character(output_b1$"CHARGE ZONE")
 row_index_max <- unlist(lapply(row_name_max, function(row_name_max) {
   index <- which(rownames(cz_post_feb_eparcel_express_ex_mel) == row_name_max)
   if (length(index) == 0) {
@@ -243,7 +244,7 @@ col_index_max <- unlist(lapply(output_c1$weight_category_max, function(col_name_
   which(colnames(cz_post_feb_eparcel_regular_ex_syd ) == col_name_max)
 }))
 
-row_name_max<- as.character(output_c1$CHARGE.ZONE)
+row_name_max<- as.character(output_c1$"CHARGE ZONE")
 row_index_max <- unlist(lapply(row_name_max, function(row_name_max) {
   index <- which(rownames(cz_post_feb_eparcel_regular_ex_syd ) == row_name_max)
   if (length(index) == 0) {
@@ -288,7 +289,7 @@ col_index_max <- unlist(lapply(output_d1$weight_category_max, function(col_name_
   which(colnames(cz_post_feb_eparcel_express_ex_syd) == col_name_max)
 }))
 
-row_name_max<- as.character(output_d1$CHARGE.ZONE)
+row_name_max<- as.character(output_d1$"CHARGE ZONE")
 row_index_max <- unlist(lapply(row_name_max, function(row_name_max) {
   index <- which(rownames(cz_post_feb_eparcel_express_ex_syd) == row_name_max)
   if (length(index) == 0) {
@@ -359,7 +360,7 @@ col_index_max <- unlist(lapply(output_i1$weight_category_max, function(col_name_
   which(colnames(cz_post_feb_eparcel_wine_ex_mel) == col_name_max)
 }))
 
-row_name_max<- as.character(output_i1$CHARGE.ZONE)
+row_name_max<- as.character(output_i1$"CHARGE ZONE")
 row_index_max <- unlist(lapply(row_name_max, function(row_name_max) {
   index <- which(rownames(cz_post_feb_eparcel_wine_ex_mel) == row_name_max)
   if (length(index) == 0) {
@@ -396,7 +397,7 @@ col_index_max <- unlist(lapply(output_j1$weight_category_max, function(col_name_
   which(colnames(cz_post_feb_eparcel_wine_ex_syd) == col_name_max)
 }))
 
-row_name_max<- as.character(output_j1$CHARGE.ZONE)
+row_name_max<- as.character(output_j1$"CHARGE ZONE")
 row_index_max <- unlist(lapply(row_name_max, function(row_name_max) {
   index <- which(rownames(cz_post_feb_eparcel_wine_ex_syd) == row_name_max)
   if (length(index) == 0) {
@@ -434,7 +435,7 @@ col_index_max <- unlist(lapply(output_l1$weight_category_max, function(col_name_
   
 }))
 
-row_name_max<- as.character(output_l1$CHARGE.ZONE)
+row_name_max<- as.character(output_l1$"CHARGE ZONE")
 row_index_max <- unlist(lapply(row_name_max, function(row_name_max) {
   index <- which(rownames(cz_post_feb_eparcel_international_standard) == row_name_max)
   if (length(index) == 0) {
@@ -445,7 +446,7 @@ row_index_max <- unlist(lapply(row_name_max, function(row_name_max) {
 }))
 
 output_l_2 <-cbind(output_l1, (cbind(row_index_max, col_index_max)))
-sapply(output_l_2, class)
+#sapply(output_l_2, class)
 
 # query new base charge rate 
 # Function to extract values from charge zone dataset based on indices
@@ -456,7 +457,6 @@ extract_charge_value_max_incgst <- function(row_index_max, col_index_max) {
 }
 
 output_l_2$charge_value_max_incgst <- mapply(extract_charge_value_max_incgst, output_l_2$row_index_max, output_l_2$col_index_max)
-
 
 
 # Function to calculate charge based on charge_value_max_incgst and Per_Kg_#. 
@@ -481,7 +481,7 @@ calculate_final_charge <- function(charge_value_max_incgst, weight_category_max,
 
 
 output_l_2$base_charge_incgst <- mapply(calculate_final_charge, output_l_2$charge_value_max_incgst, output_l_2$weight_category_max, output_l_2$max_weight, output_l_2$row_index_max)
-sapply(output_l_2, class)
+#sapply(output_l_2, class)
 
 #### Base charge fo Express Courier International (eParcel) ####
 # using the description here
@@ -495,7 +495,7 @@ col_index_max <- unlist(lapply(output_k1$weight_category_max, function(col_name_
   which(colnames(cz_post_feb_eparcel_international_express_merch) == col_name_max)
 }))
 
-row_name_max<- as.character(output_k1$CHARGE.ZONE)
+row_name_max<- as.character(output_k1$"CHARGE ZONE")
 row_index_max <- unlist(lapply(row_name_max, function(row_name_max) {
   index <- which(rownames(cz_post_feb_eparcel_international_express_merch) == row_name_max)
   if (length(index) == 0) {
@@ -538,7 +538,7 @@ subset_and_operate <- function(data) {
     subset_data$row_index_max <- NA
     subset_data$col_index_max <- NA
     subset_data$charge_value_max_incgst <- NA
-    subset_data$base_charge_incgst <- subset_data$AMOUNT.INCL.TAX
+    subset_data$base_charge_incgst <- subset_data$"AMOUNT INCL TAX"
     return(subset_data)
   } else {
     return(NULL)
@@ -656,7 +656,7 @@ output_all_services_2$warnings <- ifelse(is.na(output_all_services_2$charge_valu
 
 # Condition 2: If service == 'International' and BILLED.WEIGHT == 0
 output_all_services_2$warnings <- ifelse(output_all_services_2$service == 'International' & 
-                                           output_all_services_2$BILLED.WEIGHT == 0,
+                                           output_all_services_2$"BILLED WEIGHT" == 0,
                                          paste(output_all_services_2$warnings, "Declared weight used. "),
                                          output_all_services_2$warnings)
 
@@ -666,7 +666,7 @@ output_all_services_2$warnings <- ifelse(!(output_all_services_2$service %in% c(
                                                                                 'ep_return_to_sender', 
                                                                                 'reg_eparcel_returns')) & 
                                            output_all_services_2$cubic_weight == 0 & 
-                                           output_all_services_2$BILLED.WEIGHT == 0,
+                                           output_all_services_2$"BILLED WEIGHT" == 0,
                                          paste(output_all_services_2$warnings, "Declared weight used. "),
                                          output_all_services_2$warnings)
 
@@ -682,8 +682,8 @@ output_all_services_2$warnings <- ifelse(output_all_services_2$weight_category_m
                                          output_all_services_2$warnings)
 
 # Condition 6: If CHARGE.ZONE is blank or NA
-output_all_services_2$warnings <- ifelse(is.na(output_all_services_2$CHARGE.ZONE) | 
-                                           output_all_services_2$CHARGE.ZONE == "",
+output_all_services_2$warnings <- ifelse(is.na(output_all_services_2$"CHARGE ZONE") | 
+                                           output_all_services_2$"CHARGE ZONE" == "",
                                          paste(output_all_services_2$warnings, "No charge zone detected. "),
                                          output_all_services_2$warnings)
 
@@ -744,5 +744,5 @@ output_all_services_2$sec_mng_uplifted_gst <- output_all_services_2$sec_mng_chrg
 output_all_services_2 <- output_all_services_2
 
 # left in for testing purposes
-#write.csv(output_all_services_2, file = "output_all_services_2.csv")
+write.csv(output_all_services_2, file = "output_all_services_2.csv")
 

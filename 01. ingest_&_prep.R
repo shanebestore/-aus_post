@@ -13,6 +13,9 @@
 #install.packages("dplyr")
 library(dplyr)
 
+install.packages("readr")
+library(readr)
+
 
 #### 1.b request CSV and user inputs ---- 
 
@@ -22,19 +25,26 @@ library(dplyr)
 
 
 #bill = read.csv("billing_docs/1013016084-6214851349184512.csv", head=TRUE, sep=",")  # 01 - 16 feb
-bill = read.csv("billing_docs/1013048181-6514511150317568.csv", head=TRUE, sep=",")  # 17 - 28 feb
+#bill = read.csv("billing_docs/ESTORELOGISTICSPTYLTD_0006794750_20240503_1013168047.csv", head=TRUE, sep=",", fileEncoding = "UTF-8", stringsAsFactors = FALSE)  # 17 - 28 feb , stringsAsFactors = FALSE
 #bill = read.csv("billing_docs/1013085979-5806754721955840.csv", head=TRUE, sep=",")  # 01 - 16 Mar
 #bill = read.csv("billing_docs/1013111472-5847093054799872.csv", head=TRUE, sep=",")  # 17 - 31 Mar
 #bill = read.csv("billing_docs/1013156007-5729374082957312.csv", head=TRUE, sep=",")  # 01 - 15 April
 #bill = read.csv("billing_docs/1013168047-5072493127663616.csv", head=TRUE, sep=",")  # 16 - 30 April;
 
+##########################
+#bill <- read_csv("billing_docs/ESTORELOGISTICSPTYLTD_0006794750_20240503_1013168047.csv", locale = locale(encoding = "UTF-8"), na = c("", "NA"))
+bill = read_csv("billing_docs/1013168047-5072493127663616.csv", locale = locale(encoding = "UTF-8"), na = c("", "NA"))
+
+spec(bill)
+##################################
+
 #### 1.c billing date extracted for title generation 
 # Get the min and max dates the bill covers
-bill$BILLING.DATE <- as.Date(as.character(bill$BILLING.DATE), format = "%Y%m%d")
-min_date <- min(bill$BILLING.DATE, na.rm = TRUE)
-max_date <- max(bill$BILLING.DATE, na.rm = TRUE)
+#bill$BILLING.DATE <- as.Date(as.character(bill$BILLINGDATE), format = "%Y%m%d")
+min_date <- min(bill$"BILLING DATE", na.rm = TRUE)
+max_date <- max(bill$"BILLING DATE", na.rm = TRUE)
 
-predefined_text <- paste( format(min_date, "%Y-%m-%d"), "to", format(max_date, "%Y-%m-%d"))
+predefined_text <- paste(  "PE", max_date)
 
 # pre feb base rates. Left in for pulling comparison calcs
 #cz_pre_feb_eparcel_regular_ex_mel = read.csv("reference_data/cz_pre_feb_eparcel_regular_ex_mel.csv", head=TRUE, row.names = 1,  sep=",")
@@ -104,8 +114,8 @@ bill_cut1 <- bill[!grepl("charge|surcharge|admin|fuel", bill$DESCRIPTION, ignore
 #bill_cut1 <- bill
 
 #cutting the dataset down to just the metrics we need for ALL of the basic calculations
-bill_cut1 <-  bill_cut1[,  c("REGION", "RECEIVING.COUNTRY", "customer_code", "customer_code2", "CUSTOMER", "NAME_1", "NAME_2", "NAME_3", "DESCRIPTION", "BILLING.DOC", "SERVICE.DATE", "TO.ADDRESS", "CONSIGNMENT.ID", "ARTICLE.ID",   
-                            "BILLED.LENGTH", "BILLED.WIDTH", "BILLED.HEIGHT", "CUBIC.WEIGHT", "BILLED.WEIGHT", "ACTUAL.WEIGHT", "CHARGE.ZONE", "FROM.STATE", "AVG..UNIT.PRICE" ,"AMOUNT.INCL.TAX", "AMOUNT.EXCL.TAX", "DECLARED.WEIGHT")] 
+bill_cut1 <-  bill_cut1[,  c("REGION", "RECEIVING COUNTRY", "customer_code", "customer_code2", "CUSTOMER", "NAME_1", "NAME_2", "NAME_3", "DESCRIPTION", "BILLING DOC", "SERVICE DATE", "TO ADDRESS", "CONSIGNMENT ID", "ARTICLE ID",   
+                            "BILLED LENGTH", "BILLED WIDTH", "BILLED HEIGHT", "CUBIC WEIGHT", "BILLED WEIGHT", "ACTUAL WEIGHT", "CHARGE ZONE", "FROM STATE", "AVG. UNIT PRICE" ,"AMOUNT INCL TAX", "AMOUNT EXCL TAX", "DECLARED WEIGHT")] 
 
 #### 1.g create the service column from the description to reference against rate cards
 bill_cut1$service <- ifelse(bill_cut1$REGION == "VIC" & bill_cut1$DESCRIPTION == "Parcel Post with Signature", "Regular.VIC",
@@ -161,6 +171,6 @@ is_gst_free <- function(zone) {
 }
 
 # Apply the function to create the new column
-bill_cut1$is_gst_free_zone <- is_gst_free(bill_cut1$CHARGE.ZONE)
+bill_cut1$is_gst_free_zone <- is_gst_free(bill_cut1$"CHARGE ZONE")
 
 

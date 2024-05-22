@@ -1,4 +1,3 @@
-#
 # This is a Shiny web application. You can run the application by clicking
 # the 'Run App' button above.
 #
@@ -12,17 +11,16 @@
 #                          secret='RfE1CzWLqUdudUMr2Te+H9c069453mXDXKxw1KsL')
 
 #library(rsconnect)
+#rsconnect::deployApp('C:\\Users\\shaneb\\Desktop\\aus_repo_2\\-aus_post\\app1505') # this will have to be changed to IT's destination. Reference data stored here
 
-
-#rsconnect::deployApp('C:\\Users\\shaneb\\Desktop\\aus_repo_2\\-aus_post\\app1505')
 knitr::opts_chunk$set(echo = TRUE)
-#install.packages("dplyr")
-#library(dplyr)
+install.packages("dplyr")
+library(dplyr)
 
-#install.packages("zip")
+install.packages("zip")
 library(zip)
 
-#install.packages("dplyr")
+install.packages("shiny")
 library(shiny)
 
 # Define UI
@@ -140,7 +138,8 @@ server <- function(input, output) {
     min_date <- min(bill$BILLING.DATE, na.rm = TRUE)
     max_date <- max(bill$BILLING.DATE, na.rm = TRUE)
     
-    predefined_text <- paste( format(min_date, "%Y-%m-%d"), "to", format(max_date, "%Y-%m-%d"))
+    predefined_text <- paste(  "PE", format(max_date, "%Y-%m-%d"))
+
     
     # pre feb base rates. Left in for pulling comparison calcs
     #cz_pre_feb_eparcel_regular_ex_mel = read.csv("reference_data/cz_pre_feb_eparcel_regular_ex_mel.csv", head=TRUE, row.names = 1,  sep=",")
@@ -1189,7 +1188,7 @@ server <- function(input, output) {
     file_name <- paste0("billing_doc_output_", predefined_text, ".csv")
     full_file_path <- file.path(output_folder, file_name)
     
-    write.csv(billing_doc_output, file = full_file_path, row.names = FALSE)
+    #write.csv(billing_doc_output, file = full_file_path, row.names = FALSE)
     
     #### aggregation block ----
     # this will be used to generate the sums and the ap_post_supply will be taken from here
@@ -1321,7 +1320,7 @@ server <- function(input, output) {
       file_name <- file.path(new_folder_path, paste0("ap_post_supply_", predefined_text, "_", clean_name, ".csv"))
       
       # Write subset to CSV
-      write.csv(subset_data, file = file_name, row.names = FALSE)
+      #write.csv(subset_data, file = file_name, row.names = FALSE)
     }
     
     #### 3.l create the ap post supply consolidated ----
@@ -1333,7 +1332,7 @@ server <- function(input, output) {
     file_name <- paste0("ap_post_supply_consolidated_", predefined_text, ".csv")
     full_file_path <- file.path(output_folder, file_name)
     
-    write.csv(ap_post_supply, file = full_file_path, row.names = FALSE)
+    #write.csv(ap_post_supply, file = full_file_path, row.names = FALSE)
     
     ###### Section 4.a Summary calculations created ----
     # just the custo and description 
@@ -1372,7 +1371,7 @@ server <- function(input, output) {
     file_name <- paste0("summary_by_custo_description_", predefined_text, ".csv")
     full_file_path <- file.path(output_folder, file_name)
     
-    write.csv(summary_by_custo_description, file = full_file_path, row.names = FALSE)
+    #write.csv(summary_by_custo_description, file = full_file_path, row.names = FALSE)
     
     
     #just the description 
@@ -1410,7 +1409,7 @@ server <- function(input, output) {
     file_name <- paste0("summary_by_description_", predefined_text, ".csv")
     full_file_path <- file.path(output_folder, file_name)
     
-    write.csv(summary_by_description, file = full_file_path, row.names = FALSE)
+    #write.csv(summary_by_description, file = full_file_path, row.names = FALSE)
     
     
 ################################################    
@@ -1463,7 +1462,7 @@ server <- function(input, output) {
           clean_name <- gsub("[^A-Za-z0-9._-]", "_", name)
           
           # Generate file name with folder path
-          file_name <- file.path(new_folder_path, paste0("ap_post_supply_", predefined_text, "_", clean_name, ".csv"))
+          file_name <- file.path(new_folder_path, paste0(clean_name, "ap_post_supply_", predefined_text, "_",  ".csv"))
           
           # Write subset to CSV
           write.csv(subset_data, file = file_name, row.names = FALSE)
@@ -1479,11 +1478,6 @@ server <- function(input, output) {
       contentType = "application/zip"
     )
   
-    
-     
-    
-    
-    
     output$download_result4 <- downloadHandler(
       filename = function() {
         "summary_by_custo_description.csv"

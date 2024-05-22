@@ -1,0 +1,82 @@
+---
+title: "Untitled"
+author: "Shane Brennan"
+date: "2024-05-13"
+output: html_document
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(shiny)
+
+# Define UI
+ui <- fluidPage(
+  titlePanel("Input Form"),
+  sidebarLayout(
+    sidebarPanel(
+      fileInput("csv_file", "Upload CSV File", accept = ".csv"),
+      textInput("fuel_surcharge", "Fuel Surcharge for the month"),
+      textInput("force_majeure_fee", "Force Majeure Fee"),
+      textInput("peak_fee", "Peak Fee"),
+      actionButton("submit", "Submit")
+    ),
+    mainPanel(
+      verbatimTextOutput("summary"),
+      verbatimTextOutput("custom_output") # Adding custom output element
+    )
+  )
+)
+
+# Define server logic
+server <- function(input, output) {
+  # Increase maximum file size limit to 1 GB
+  options(shiny.maxRequestSize = 1024*1024*1024) # 1 GB in bytes
+
+  # Define a reactive expression to store user inputs
+  user_data <- reactive({
+    list(
+      fuel_surcharge = as.numeric(input$fuel_surcharge),
+      force_majeure_fee = as.numeric(input$force_majeure_fee),
+      peak_fee = as.numeric(input$peak_fee),
+      csv_file = input$csv_file
+    )
+  })
+
+  # Define an observer to trigger custom script after user input and summary rendering
+  observeEvent(input$submit, {
+    user_inputs <- user_data()
+    
+    if (!is.null(user_inputs$fuel_surcharge) && !is.null(user_inputs$force_majeure_fee) && !is.null(user_inputs$peak_fee) && !is.null(user_inputs$csv_file)) {
+      # Execute your custom script here
+      bill <- read.csv(user_inputs$csv_file$datapath, head=TRUE, sep=",")  # Read uploaded CSV file
+      sum_qty <- sum(bill$QTY)
+      result <- sum_qty * user_inputs$fuel_surcharge
+      print(result)
+      write.csv(result, file = "result.csv")
+      print("ran")  # Print "ran" after the result
+    }
+  })
+
+  # Render the summary text
+  output$summary <- renderPrint({
+    user_inputs <- user_data()
+    cat("User Inputs:\n")
+    cat("Fuel Surcharge:", user_inputs$fuel_surcharge, "\n")
+    cat("Force Majeure Fee:", user_inputs$force_majeure_fee, "\n")
+    cat("Peak Fee:", user_inputs$peak_fee, "\n")
+  })
+
+  # Custom output
+  output$custom_output <- renderPrint({
+    user_inputs <- user_data()
+    # "ran" will be printed after the result
+  })
+}
+
+# Run the application
+shinyApp(ui = ui, server = server)
+```
+
+
+
